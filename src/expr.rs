@@ -22,7 +22,8 @@ trait ExprVisitor {
     }
 }
 
-struct BoolVisitor {}
+#[derive(Default)]
+struct BoolVisitor;
 impl ExprVisitor for BoolVisitor {
     type Output = bool;
 
@@ -40,7 +41,7 @@ fn test_bool_visitor() {
     let expr = LiteralExpr {
         lit: Literal::Bool(true),
     };
-    let mut visitor = BoolVisitor {};
+    let mut visitor = BoolVisitor::default();
     let val = expr.visit(&mut visitor);
     assert_eq!(val, true);
 }
