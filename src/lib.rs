@@ -186,10 +186,9 @@ impl Scanner {
             return;
         }
         self.advance(); // "
-        self.add_token_lexeme(
-            TokenType::String,
-            self.lexeme_at(self.start + 1, self.current - 1),
-        );
+        let lexeme = self.lexeme_at(self.start + 1, self.current - 1);
+        let literal = lexeme.string();
+        self.add_token_lexeme_literal(TokenType::String, lexeme, Some(literal));
     }
 
     fn peek(&self) -> char {
@@ -283,6 +282,9 @@ impl Lexeme {
     fn number(&self) -> Literal {
         Literal::Number(self.0.parse::<f64>().unwrap())
     }
+    fn string(&self) -> Literal {
+        Literal::String(self.0.clone())
+    }
     fn identifier_type(&self) -> TokenType {
         use TokenType::*;
         match self.0.as_str() {
@@ -321,6 +323,7 @@ impl Token {}
 #[derive(Clone, Debug, strum_macros::Display)]
 pub enum Literal {
     Number(f64),
+    String(String),
 }
 
 #[derive(Clone, Copy, Debug, strum_macros::Display)]
