@@ -143,7 +143,9 @@ impl Scanner {
         while Self::is_alpha_numeric(self.peek()) {
             self.advance();
         }
-        self.add_token(TokenType::Identifier);
+        let lexeme = self.lexeme();
+        let typ = lexeme.identifier_type();
+        self.add_token_lexeme(typ, lexeme);
     }
 
     fn number(&mut self) {
@@ -156,7 +158,7 @@ impl Scanner {
         while Self::is_digit(self.peek()) {
             self.advance();
         }
-        let lexeme = self.lexeme(self.start, self.current);
+        let lexeme = self.lexeme();
         let literal = lexeme.number();
         self.add_token_lexeme_literal(TokenType::Number, lexeme, Some(literal));
     }
@@ -186,7 +188,7 @@ impl Scanner {
         self.advance(); // "
         self.add_token_lexeme(
             TokenType::String,
-            self.lexeme(self.start + 1, self.current - 1),
+            self.lexeme_at(self.start + 1, self.current - 1),
         );
     }
 
@@ -239,7 +241,7 @@ impl Scanner {
     }
 
     fn add_token(&mut self, typ: TokenType) {
-        self.add_token_lexeme(typ, self.lexeme(self.start, self.current));
+        self.add_token_lexeme(typ, self.lexeme());
     }
 
     fn add_token_lexeme(&mut self, typ: TokenType, lexeme: Lexeme) {
@@ -261,7 +263,11 @@ impl Scanner {
         self.tokens.push(token);
     }
 
-    fn lexeme(&self, start: usize, end: usize) -> Lexeme {
+    fn lexeme(&self) -> Lexeme {
+        self.lexeme_at(self.start, self.current)
+    }
+
+    fn lexeme_at(&self, start: usize, end: usize) -> Lexeme {
         Lexeme(self.chars[start..end].into_iter().map(|t| t.1).collect())
     }
 
@@ -276,6 +282,28 @@ struct Lexeme(String);
 impl Lexeme {
     fn number(&self) -> Literal {
         Literal::Number(self.0.parse::<f64>().unwrap())
+    }
+    fn identifier_type(&self) -> TokenType {
+        use TokenType::*;
+        match self.0.as_str() {
+            "and" => And,
+            "class" => Class,
+            "else" => Else,
+            "false" => False,
+            "for" => For,
+            "fun" => Fun,
+            "if" => If,
+            "nil" => Nil,
+            "or" => Or,
+            "print" => Print,
+            "return" => Return,
+            "super" => Super,
+            "this" => This,
+            "true" => True,
+            "var" => Var,
+            "while" => While,
+            _ => Identifier,
+        }
     }
 }
 
