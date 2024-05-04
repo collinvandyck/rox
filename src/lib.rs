@@ -285,8 +285,14 @@ impl Scanner {
     }
 }
 
-#[derive(Default, Clone, Debug, derive_more::Display, PartialEq)]
+#[derive(Default, Clone, Debug, derive_more::Display, PartialEq, derive_more::From)]
 struct Lexeme(String);
+
+impl From<&str> for Lexeme {
+    fn from(value: &str) -> Self {
+        Self(value.to_string())
+    }
+}
 
 impl Lexeme {
     fn number(&self) -> Literal {
@@ -394,21 +400,41 @@ enum TokenType {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Lexeme, Lox, Scanner, Token, TokenType};
+    use crate::{Lexeme, Literal, Lox, Scanner, Token, TokenType};
 
     #[test]
     fn test_tokens() {
-        let prog = "";
-        let mut s = Scanner::new(prog);
-        let toks = s.scan_tokens().unwrap();
-        assert_eq!(
-            toks,
-            vec![Token {
-                typ: TokenType::Eof,
-                lexeme: Lexeme::default(),
-                literal: None,
-                line: 1,
-            }]
-        );
+        for (prog, ex) in [
+            (
+                "",
+                vec![Token {
+                    typ: TokenType::Eof,
+                    lexeme: Lexeme::default(),
+                    literal: None,
+                    line: 1,
+                }],
+            ),
+            (
+                "3",
+                vec![
+                    Token {
+                        typ: TokenType::Number,
+                        lexeme: Lexeme::from("3"),
+                        literal: Some(Literal::Number(3.0)),
+                        line: 1,
+                    },
+                    Token {
+                        typ: TokenType::Eof,
+                        lexeme: Lexeme::default(),
+                        literal: None,
+                        line: 1,
+                    },
+                ],
+            ),
+        ] {
+            let mut s = Scanner::new(prog);
+            let toks = s.scan_tokens().unwrap();
+            assert_eq!(toks, ex, "prog '{prog}' produced {toks:#?}");
+        }
     }
 }
