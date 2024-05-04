@@ -10,32 +10,36 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
     tracing_subscriber::fmt().init();
-    if let Some(script) = args.script {
-        run_file(&script)?;
+    let ok = if let Some(script) = args.script {
+        run_file(&script)?
     } else {
-        run_prompt()?;
+        run_prompt()?
+    };
+    if !ok {
+        std::process::exit(1);
     }
     Ok(())
 }
 
-fn run_file(script: &Path) -> Result<()> {
+fn run_file(script: &Path) -> Result<bool> {
     let mut lox = Lox::new();
     let bs = fs::read(script)?;
     let prog = String::from_utf8(bs).context("script to utf8")?;
-    lox.run(prog)?;
-    Ok(())
+    lox.run(prog);
+    Ok(!lox.had_error())
 }
 
-fn run_prompt() -> Result<()> {
+fn run_prompt() -> Result<bool> {
     let mut lox = Lox::new();
     for line in stdin().lines() {
         let line = line?;
-        if let Err(err) = lox.run(line) {
-            error!("lox: {err}");
-            lox.clear_err();
+        if line.is_empty() {
+            continue;
         }
+        lox.clear_err();
+        lox.run(line);
     }
-    Ok(())
+    Ok(!lox.had_error())
 }
 
 fn run(prog: String) -> Result<()> {

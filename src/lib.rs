@@ -18,27 +18,27 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 pub struct Lox {
-    err: Option<Error>,
+    err: bool,
 }
 
 impl Lox {
     pub fn new() -> Self {
-        Self { err: None }
+        Self { err: false }
     }
 
-    pub fn run(&mut self, prog: String) -> Result<()> {
+    pub fn run(&mut self, prog: String) {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens();
+        self.err = scanner.err;
         println!("{}", tokens.iter().map(|t| t.to_string()).join(" "));
-        Ok(())
     }
 
     pub fn had_error(&self) -> bool {
-        self.err.is_some()
+        self.err
     }
 
     pub fn clear_err(&mut self) {
-        self.err = None;
+        self.err = false;
     }
 }
 
@@ -50,7 +50,7 @@ struct Scanner {
     start: usize,
     current: usize,
     line: usize,
-    errs: Vec<Error>,
+    err: bool,
 }
 
 impl Scanner {
@@ -231,10 +231,12 @@ impl Scanner {
     }
 
     fn error(&mut self, msg: &str) {
-        self.errs.push(Error::Line {
+        let err = Error::Line {
             line: self.line,
             msg: msg.to_string(),
-        });
+        };
+        eprintln!("{err}");
+        self.err = true;
     }
 
     fn advance(&mut self) -> (usize, char) {
