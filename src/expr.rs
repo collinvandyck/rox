@@ -2,6 +2,40 @@ use crate::prelude::*;
 
 trait Expr {}
 
+trait Visitor {
+    type Output;
+    fn visit_binary(&self, expr: Binary<impl Expr, impl Expr>) -> Self::Output {
+        unimplemented!()
+    }
+    fn visit_literal(&self, expr: Literal) -> Self::Output {
+        unimplemented!()
+    }
+    fn visit_unary(&self, expr: Unary<impl Expr>) -> Self::Output {
+        unimplemented!()
+    }
+    fn visit_grouping(&self, expr: Grouping<impl Expr>) -> Self::Output {
+        unimplemented!()
+    }
+}
+
+struct BoolVisitor {}
+impl Visitor for BoolVisitor {
+    type Output = bool;
+
+    fn visit_binary(&self, expr: Binary<impl Expr, impl Expr>) -> Self::Output {
+        false
+    }
+    fn visit_literal(&self, expr: Literal) -> Self::Output {
+        false
+    }
+    fn visit_unary(&self, expr: Unary<impl Expr>) -> Self::Output {
+        false
+    }
+    fn visit_grouping(&self, expr: Grouping<impl Expr>) -> Self::Output {
+        false
+    }
+}
+
 struct Binary<L, R> {
     left: L,
     op: Token,
