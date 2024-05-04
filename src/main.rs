@@ -1,16 +1,13 @@
 #![allow(unused)]
 
-use anyhow::Result as AnyRes;
-use clap::Parser;
-use std::path::{Path, PathBuf};
-use tracing::info;
+use rox::prelude::*;
 
 #[derive(Debug, clap::Parser)]
 struct Args {
     script: Option<PathBuf>,
 }
 
-fn main() -> AnyRes<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
     tracing_subscriber::fmt().init();
     if let Some(script) = args.script {
@@ -21,10 +18,20 @@ fn main() -> AnyRes<()> {
     Ok(())
 }
 
-fn run_file(script: &Path) -> AnyRes<()> {
+fn run_file(script: &Path) -> Result<()> {
+    let bs = fs::read(script)?;
+    let prog = String::from_utf8(bs).context("script to utf8")?;
+    run(prog)
+}
+
+fn run_prompt() -> Result<()> {
+    for line in stdin().lines() {
+        let line = line?;
+        run(line)?;
+    }
     Ok(())
 }
 
-fn run_prompt() -> AnyRes<()> {
+fn run(prog: String) -> Result<()> {
     Ok(())
 }
