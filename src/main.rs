@@ -19,15 +19,21 @@ fn main() -> Result<()> {
 }
 
 fn run_file(script: &Path) -> Result<()> {
+    let mut lox = Lox::new();
     let bs = fs::read(script)?;
     let prog = String::from_utf8(bs).context("script to utf8")?;
-    run(prog)
+    lox.run(prog)?;
+    Ok(())
 }
 
 fn run_prompt() -> Result<()> {
+    let mut lox = Lox::new();
     for line in stdin().lines() {
         let line = line?;
-        run(line)?;
+        if let Err(err) = lox.run(line) {
+            error!("lox: {err}");
+            lox.clear_err();
+        }
     }
     Ok(())
 }
