@@ -1,6 +1,7 @@
 pub use crate::*;
 pub use anyhow::{Context, Result};
 pub use clap::Parser;
+pub use expr::*;
 pub use std::{
     fs,
     io::stdin,

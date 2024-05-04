@@ -1,12 +1,12 @@
 use crate::{prelude::*, Literal};
 
-trait Expr {
+pub trait Expr {
     fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>;
 }
 
-trait ExprVisitor {
+pub trait ExprVisitor {
     type Output;
     fn visit_binary(&mut self, expr: &BinaryExpr<impl Expr, impl Expr>) -> Self::Output {
         unimplemented!()
@@ -23,7 +23,7 @@ trait ExprVisitor {
 }
 
 #[derive(Default)]
-struct AstPrinter {}
+pub struct AstPrinter {}
 
 impl AstPrinter {
     pub fn print(mut self, expr: impl Expr) -> String {
@@ -35,7 +35,7 @@ impl ExprVisitor for AstPrinter {
     type Output = String;
 
     fn visit_grouping(&mut self, expr: &GroupExpr<impl Expr>) -> Self::Output {
-        format!("( {} )", expr.accept(self))
+        format!("( group {} )", expr.expr.accept(self))
     }
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
         expr.lit.to_string()
@@ -77,7 +77,7 @@ fn test_bool_visitor() {
     assert_eq!(val, true);
 }
 
-struct BinaryExpr<L, R> {
+pub struct BinaryExpr<L, R> {
     left: L,
     op: Token,
     right: R,
@@ -88,7 +88,7 @@ where
     L: Expr,
     R: Expr,
 {
-    fn new(left: L, op: Token, right: R) -> Self {
+    pub fn new(left: L, op: Token, right: R) -> Self {
         Self { left, op, right }
     }
 }
@@ -106,12 +106,12 @@ where
     }
 }
 
-struct LiteralExpr {
+pub struct LiteralExpr {
     lit: Literal,
 }
 
 impl LiteralExpr {
-    fn new(lit: Literal) -> Self {
+    pub fn new(lit: Literal) -> Self {
         Self { lit }
     }
 }
@@ -125,7 +125,7 @@ impl Expr for LiteralExpr {
     }
 }
 
-struct UnaryExpr<R> {
+pub struct UnaryExpr<R> {
     op: Token,
     right: R,
 }
@@ -134,7 +134,7 @@ impl<R> UnaryExpr<R>
 where
     R: Expr,
 {
-    fn new(op: Token, right: R) -> Self {
+    pub fn new(op: Token, right: R) -> Self {
         Self { op, right }
     }
 }
@@ -151,7 +151,7 @@ where
     }
 }
 
-struct GroupExpr<E> {
+pub struct GroupExpr<E> {
     expr: E,
 }
 
@@ -159,7 +159,7 @@ impl<E> GroupExpr<E>
 where
     E: Expr,
 {
-    fn new(expr: E) -> Self {
+    pub fn new(expr: E) -> Self {
         GroupExpr { expr }
     }
 }

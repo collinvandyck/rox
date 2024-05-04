@@ -283,7 +283,7 @@ impl Scanner {
 }
 
 #[derive(Default, Clone, Debug, derive_more::Display, PartialEq, derive_more::From)]
-struct Lexeme(String);
+pub struct Lexeme(String);
 
 impl From<&str> for Lexeme {
     fn from(value: &str) -> Self {
@@ -323,11 +323,22 @@ impl Lexeme {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct Token {
+pub struct Token {
     pub typ: TokenType,
     pub lexeme: Lexeme,
     pub literal: Option<Literal>,
     pub line: usize,
+}
+
+impl Token {
+    pub fn new(typ: TokenType, lexeme: Lexeme, literal: Option<Literal>, line: usize) -> Self {
+        Self {
+            typ,
+            lexeme,
+            literal,
+            line,
+        }
+    }
 }
 
 impl Display for Token {
@@ -336,17 +347,25 @@ impl Display for Token {
     }
 }
 
-impl Token {}
-
-#[derive(Clone, Debug, strum_macros::Display, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
     String(String),
     Bool(bool),
 }
 
+impl Display for Literal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Literal::Number(n) => write!(f, "{n}"),
+            Literal::String(s) => write!(f, r#""{s}""#),
+            Literal::Bool(v) => write!(f, "{v}"),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, strum_macros::Display, PartialEq)]
-enum TokenType {
+pub enum TokenType {
     // single character
     LeftParen,
     RightParen,
