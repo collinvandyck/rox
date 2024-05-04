@@ -11,6 +11,7 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
+    // expression -> equality ;
     fn expression(&mut self) -> Expr {
         self.equality()
     }
