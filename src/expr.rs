@@ -1,44 +1,51 @@
 use crate::{prelude::*, Literal};
 
 pub enum Expr {
-    Binary(Box<EnumBinary>),
-    Literal(Box<EnumLiteral>),
-    Unary(Box<EnumUnary>),
-    Group(Box<EnumGroup>),
+    Binary(BinaryExpr),
+    Literal(LiteralExpr),
+    Unary(UnaryExpr),
+    Group(GroupExpr),
 }
 
 impl Expr {
     pub fn binary(left: Expr, op: Token, right: Expr) -> Self {
-        Self::Binary(EnumBinary { left, op, right }.into())
+        Self::Binary(BinaryExpr {
+            left: left.into(),
+            op,
+            right: right.into(),
+        })
     }
     pub fn literal(literal: Literal) -> Self {
-        Self::Literal(EnumLiteral { lit: literal }.into())
+        Self::Literal(LiteralExpr { lit: literal })
     }
     pub fn unary(op: Token, right: Expr) -> Self {
-        Self::Unary(EnumUnary { op, right }.into())
+        Self::Unary(UnaryExpr {
+            op,
+            right: right.into(),
+        })
     }
     pub fn group(expr: Expr) -> Self {
-        Self::Group(EnumGroup { expr }.into())
+        Self::Group(GroupExpr { expr: expr.into() })
     }
 }
 
-pub struct EnumBinary {
-    left: Expr,
+pub struct BinaryExpr {
+    left: Box<Expr>,
     op: Token,
-    right: Expr,
+    right: Box<Expr>,
 }
 
-pub struct EnumLiteral {
+pub struct LiteralExpr {
     lit: Literal,
 }
 
-pub struct EnumUnary {
+pub struct UnaryExpr {
     op: Token,
-    right: Expr,
+    right: Box<Expr>,
 }
 
-pub struct EnumGroup {
-    expr: Expr,
+pub struct GroupExpr {
+    expr: Box<Expr>,
 }
 
 impl Expr {
@@ -57,10 +64,10 @@ impl Expr {
 
 pub trait Visitor {
     type Output;
-    fn visit_binary(&mut self, expr: &EnumBinary) -> Self::Output;
-    fn visit_literal(&mut self, expr: &EnumLiteral) -> Self::Output;
-    fn visit_unary(&mut self, expr: &EnumUnary) -> Self::Output;
-    fn visit_group(&mut self, expr: &EnumGroup) -> Self::Output;
+    fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output;
+    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output;
+    fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output;
+    fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output;
 }
 
 #[derive(Default)]
@@ -74,13 +81,13 @@ impl AstPrinter {
 
 impl Visitor for AstPrinter {
     type Output = String;
-    fn visit_group(&mut self, expr: &EnumGroup) -> Self::Output {
+    fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
         format!("( group {} )", expr.expr.accept(self))
     }
-    fn visit_literal(&mut self, expr: &EnumLiteral) -> Self::Output {
+    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
         expr.lit.to_string()
     }
-    fn visit_binary(&mut self, expr: &EnumBinary) -> Self::Output {
+    fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         format!(
             "( {} {} {})",
             expr.op.lexeme,
@@ -88,7 +95,7 @@ impl Visitor for AstPrinter {
             expr.right.accept(self)
         )
     }
-    fn visit_unary(&mut self, expr: &EnumUnary) -> Self::Output {
+    fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
         format!("( {} {} )", expr.op.lexeme, expr.right.accept(self))
     }
 }
