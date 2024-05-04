@@ -342,6 +342,7 @@ impl Token {}
 pub enum Literal {
     Number(f64),
     String(String),
+    Bool(bool),
 }
 
 #[derive(Clone, Copy, Debug, strum_macros::Display, PartialEq)]
