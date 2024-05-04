@@ -65,7 +65,20 @@ impl Parser {
         expr
     }
 
+    // unary → ( "!" | "-" ) unary
+    //         | primary ;
     fn unary(&mut self) -> Expr {
+        if self.match_any([TokenType::Bang, TokenType::Minus]) {
+            let op = self.previous();
+            let right = self.unary();
+            return Expr::unary(op, right);
+        }
+        self.primary()
+    }
+
+    // primary → NUMBER | STRING | "true" | "false" | "nil"
+    //           | "(" expression ")" ;
+    fn primary(&mut self) -> Expr {
         todo!()
     }
 
