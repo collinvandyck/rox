@@ -26,12 +26,24 @@ impl Parser {
         expr
     }
 
+    // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     fn comparison(&mut self) -> Expr {
-        todo!()
+        let mut expr = self.term();
+        while self.match_any([
+            TokenType::Less,
+            TokenType::LessEqual,
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+        ]) {
+            let op = self.previous();
+            let right = self.term();
+            expr = Expr::binary(expr, op, right);
+        }
+        expr
     }
 
-    fn check(&self, typ: TokenType) -> bool {
-        self.tokens.get(self.current).map(|t| t.typ) == Some(typ)
+    fn term(&mut self) -> Expr {
+        todo!()
     }
 
     fn match_any(&mut self, types: impl IntoIterator<Item = TokenType>) -> bool {
@@ -44,11 +56,15 @@ impl Parser {
         false
     }
 
+    fn check(&self, typ: TokenType) -> bool {
+        self.tokens.get(self.current).map(|t| t.typ) == Some(typ)
+    }
+
     fn previous(&self) -> Token {
         self.token_at(self.current - 1)
     }
 
-    fn current(&self) -> Token {
+    fn peek(&self) -> Token {
         self.token_at(self.current)
     }
 
@@ -64,6 +80,6 @@ impl Parser {
     }
 
     fn at_end(&self) -> bool {
-        self.current >= self.tokens.len()
+        self.tokens.get(self.current).map(|t| t.typ) == Some(TokenType::Eof)
     }
 }
