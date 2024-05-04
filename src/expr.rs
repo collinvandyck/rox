@@ -33,6 +33,7 @@ impl AstPrinter {
 
 impl ExprVisitor for AstPrinter {
     type Output = String;
+
     fn visit_grouping(&mut self, expr: &GroupExpr<impl Expr>) -> Self::Output {
         format!("( {} )", expr.accept(self))
     }
