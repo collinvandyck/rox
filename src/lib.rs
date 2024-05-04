@@ -60,7 +60,8 @@ struct Scanner {
 }
 
 impl Scanner {
-    fn new(source: String) -> Self {
+    fn new(source: impl AsRef<str>) -> Self {
+        let source = source.as_ref().to_string();
         let chars = source.char_indices().collect_vec();
         Self {
             source,
@@ -284,7 +285,7 @@ impl Scanner {
     }
 }
 
-#[derive(Default, Clone, Debug, derive_more::Display)]
+#[derive(Default, Clone, Debug, derive_more::Display, PartialEq)]
 struct Lexeme(String);
 
 impl Lexeme {
@@ -318,7 +319,7 @@ impl Lexeme {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Token {
     pub typ: TokenType,
     pub lexeme: Lexeme,
@@ -334,13 +335,13 @@ impl Display for Token {
 
 impl Token {}
 
-#[derive(Clone, Debug, strum_macros::Display)]
+#[derive(Clone, Debug, strum_macros::Display, PartialEq)]
 pub enum Literal {
     Number(f64),
     String(String),
 }
 
-#[derive(Clone, Copy, Debug, strum_macros::Display)]
+#[derive(Clone, Copy, Debug, strum_macros::Display, PartialEq)]
 enum TokenType {
     // single character
     LeftParen,
@@ -389,4 +390,25 @@ enum TokenType {
     While,
 
     Eof,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Lexeme, Lox, Scanner, Token, TokenType};
+
+    #[test]
+    fn test_tokens() {
+        let prog = "";
+        let mut s = Scanner::new(prog);
+        let toks = s.scan_tokens().unwrap();
+        assert_eq!(
+            toks,
+            vec![Token {
+                typ: TokenType::Eof,
+                lexeme: Lexeme::default(),
+                literal: None,
+                line: 1,
+            }]
+        );
+    }
 }
