@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 pub mod expr;
+pub mod parse;
 pub mod prelude;
 
 use std::fmt::Display;

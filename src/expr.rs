@@ -1,46 +1,86 @@
 use crate::{prelude::*, Literal};
 
-pub trait Expr {
-    fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: ExprVisitor<Output = O>;
+pub enum Expr {
+    Binary(Box<EnumBinary>),
+    Literal(Box<EnumLiteral>),
+    Unary(Box<EnumUnary>),
+    Group(Box<EnumGroup>),
 }
 
-pub trait ExprVisitor {
+impl Expr {
+    pub fn binary(left: Expr, op: Token, right: Expr) -> Self {
+        Self::Binary(EnumBinary { left, op, right }.into())
+    }
+    pub fn literal(literal: Literal) -> Self {
+        Self::Literal(EnumLiteral { lit: literal }.into())
+    }
+    pub fn unary(op: Token, right: Expr) -> Self {
+        Self::Unary(EnumUnary { op, right }.into())
+    }
+    pub fn group(expr: Expr) -> Self {
+        Self::Group(EnumGroup { expr }.into())
+    }
+}
+
+pub struct EnumBinary {
+    left: Expr,
+    op: Token,
+    right: Expr,
+}
+
+pub struct EnumLiteral {
+    lit: Literal,
+}
+
+pub struct EnumUnary {
+    op: Token,
+    right: Expr,
+}
+
+pub struct EnumGroup {
+    expr: Expr,
+}
+
+impl Expr {
+    pub fn accept<V, O>(&self, visitor: &mut V) -> O
+    where
+        V: Visitor<Output = O>,
+    {
+        match self {
+            Expr::Binary(b) => visitor.visit_binary(&b),
+            Expr::Literal(l) => visitor.visit_literal(&l),
+            Expr::Unary(u) => visitor.visit_unary(&u),
+            Expr::Group(g) => visitor.visit_group(&g),
+        }
+    }
+}
+
+pub trait Visitor {
     type Output;
-    fn visit_binary(&mut self, expr: &BinaryExpr<impl Expr, impl Expr>) -> Self::Output {
-        unimplemented!()
-    }
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
-        unimplemented!()
-    }
-    fn visit_unary(&mut self, expr: &UnaryExpr<impl Expr>) -> Self::Output {
-        unimplemented!()
-    }
-    fn visit_grouping(&mut self, expr: &GroupExpr<impl Expr>) -> Self::Output {
-        unimplemented!()
-    }
+    fn visit_binary(&mut self, expr: &EnumBinary) -> Self::Output;
+    fn visit_literal(&mut self, expr: &EnumLiteral) -> Self::Output;
+    fn visit_unary(&mut self, expr: &EnumUnary) -> Self::Output;
+    fn visit_group(&mut self, expr: &EnumGroup) -> Self::Output;
 }
 
 #[derive(Default)]
 pub struct AstPrinter {}
 
 impl AstPrinter {
-    pub fn print(mut self, expr: impl Expr) -> String {
+    pub fn print(mut self, expr: &Expr) -> String {
         expr.accept(&mut self)
     }
 }
 
-impl ExprVisitor for AstPrinter {
+impl Visitor for AstPrinter {
     type Output = String;
-
-    fn visit_grouping(&mut self, expr: &GroupExpr<impl Expr>) -> Self::Output {
+    fn visit_group(&mut self, expr: &EnumGroup) -> Self::Output {
         format!("( group {} )", expr.expr.accept(self))
     }
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
+    fn visit_literal(&mut self, expr: &EnumLiteral) -> Self::Output {
         expr.lit.to_string()
     }
-    fn visit_binary(&mut self, expr: &BinaryExpr<impl Expr, impl Expr>) -> Self::Output {
+    fn visit_binary(&mut self, expr: &EnumBinary) -> Self::Output {
         format!(
             "( {} {} {})",
             expr.op.lexeme,
@@ -48,130 +88,7 @@ impl ExprVisitor for AstPrinter {
             expr.right.accept(self)
         )
     }
-    fn visit_unary(&mut self, expr: &UnaryExpr<impl Expr>) -> Self::Output {
+    fn visit_unary(&mut self, expr: &EnumUnary) -> Self::Output {
         format!("( {} {} )", expr.op.lexeme, expr.right.accept(self))
-    }
-}
-
-#[derive(Default)]
-struct BoolVisitor;
-impl ExprVisitor for BoolVisitor {
-    type Output = bool;
-
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
-        if let Literal::Bool(v) = expr.lit {
-            v
-        } else {
-            false
-        }
-    }
-}
-
-#[test]
-fn test_bool_visitor() {
-    let expr = LiteralExpr {
-        lit: Literal::Bool(true),
-    };
-    let mut visitor = BoolVisitor::default();
-    let val = expr.accept(&mut visitor);
-    assert_eq!(val, true);
-}
-
-pub struct BinaryExpr<L, R> {
-    left: L,
-    op: Token,
-    right: R,
-}
-
-impl<L, R> BinaryExpr<L, R>
-where
-    L: Expr,
-    R: Expr,
-{
-    pub fn new(left: L, op: Token, right: R) -> Self {
-        Self { left, op, right }
-    }
-}
-
-impl<L, R> Expr for BinaryExpr<L, R>
-where
-    L: Expr,
-    R: Expr,
-{
-    fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: ExprVisitor<Output = O>,
-    {
-        visitor.visit_binary(&self)
-    }
-}
-
-pub struct LiteralExpr {
-    lit: Literal,
-}
-
-impl LiteralExpr {
-    pub fn new(lit: Literal) -> Self {
-        Self { lit }
-    }
-}
-
-impl Expr for LiteralExpr {
-    fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: ExprVisitor<Output = O>,
-    {
-        visitor.visit_literal(&self)
-    }
-}
-
-pub struct UnaryExpr<R> {
-    op: Token,
-    right: R,
-}
-
-impl<R> UnaryExpr<R>
-where
-    R: Expr,
-{
-    pub fn new(op: Token, right: R) -> Self {
-        Self { op, right }
-    }
-}
-
-impl<R> Expr for UnaryExpr<R>
-where
-    R: Expr,
-{
-    fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: ExprVisitor<Output = O>,
-    {
-        visitor.visit_unary(&self)
-    }
-}
-
-pub struct GroupExpr<E> {
-    expr: E,
-}
-
-impl<E> GroupExpr<E>
-where
-    E: Expr,
-{
-    pub fn new(expr: E) -> Self {
-        GroupExpr { expr }
-    }
-}
-
-impl<E> Expr for GroupExpr<E>
-where
-    E: Expr,
-{
-    fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: ExprVisitor<Output = O>,
-    {
-        visitor.visit_grouping(&self)
     }
 }
