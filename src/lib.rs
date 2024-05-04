@@ -12,12 +12,12 @@ use prelude::*;
 use tracing_subscriber::field::display;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {
+pub enum LexError {
     #[error("line: {line}: {msg}")]
     Line { line: usize, msg: String },
 }
 
-type Result<T> = std::result::Result<T, Error>;
+type Result<T> = std::result::Result<T, LexError>;
 
 #[derive(Default)]
 pub struct Lox {
@@ -234,7 +234,7 @@ impl Scanner {
     }
 
     fn error(&mut self, msg: &str) {
-        let err = Error::Line {
+        let err = LexError::Line {
             line: self.line,
             msg: msg.to_string(),
         };
@@ -354,6 +354,7 @@ pub enum Literal {
     Number(f64),
     String(String),
     Bool(bool),
+    Nil,
 }
 
 impl Display for Literal {
@@ -362,6 +363,7 @@ impl Display for Literal {
             Literal::Number(n) => write!(f, "{n}"),
             Literal::String(s) => write!(f, r#""{s}""#),
             Literal::Bool(v) => write!(f, "{v}"),
+            Literal::Nil => write!(f, "nil"),
         }
     }
 }
