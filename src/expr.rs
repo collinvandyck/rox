@@ -1,24 +1,54 @@
 use crate::{prelude::*, Literal};
 
 trait Expr {
-    fn visit<V, O>(&self, visitor: &mut V) -> O
+    fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>;
 }
 
 trait ExprVisitor {
     type Output;
-    fn visit_binary(&self, expr: &BinaryExpr<impl Expr, impl Expr>) -> Self::Output {
+    fn visit_binary(&mut self, expr: &BinaryExpr<impl Expr, impl Expr>) -> Self::Output {
         unimplemented!()
     }
-    fn visit_literal(&self, expr: &LiteralExpr) -> Self::Output {
+    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
         unimplemented!()
     }
-    fn visit_unary(&self, expr: &UnaryExpr<impl Expr>) -> Self::Output {
+    fn visit_unary(&mut self, expr: &UnaryExpr<impl Expr>) -> Self::Output {
         unimplemented!()
     }
-    fn visit_grouping(&self, expr: &GroupExpr<impl Expr>) -> Self::Output {
+    fn visit_grouping(&mut self, expr: &GroupExpr<impl Expr>) -> Self::Output {
         unimplemented!()
+    }
+}
+
+#[derive(Default)]
+struct AstPrinter {}
+
+impl AstPrinter {
+    pub fn print(mut self, expr: impl Expr) -> String {
+        expr.accept(&mut self)
+    }
+}
+
+impl ExprVisitor for AstPrinter {
+    type Output = String;
+    fn visit_grouping(&mut self, expr: &GroupExpr<impl Expr>) -> Self::Output {
+        format!("( {} )", expr.accept(self))
+    }
+    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
+        expr.lit.to_string()
+    }
+    fn visit_binary(&mut self, expr: &BinaryExpr<impl Expr, impl Expr>) -> Self::Output {
+        format!(
+            "( {} {} {})",
+            expr.op.lexeme,
+            expr.left.accept(self),
+            expr.right.accept(self)
+        )
+    }
+    fn visit_unary(&mut self, expr: &UnaryExpr<impl Expr>) -> Self::Output {
+        format!("( {} {} )", expr.op.lexeme, expr.right.accept(self))
     }
 }
 
@@ -27,7 +57,7 @@ struct BoolVisitor;
 impl ExprVisitor for BoolVisitor {
     type Output = bool;
 
-    fn visit_literal(&self, expr: &LiteralExpr) -> Self::Output {
+    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
         if let Literal::Bool(v) = expr.lit {
             v
         } else {
@@ -42,7 +72,7 @@ fn test_bool_visitor() {
         lit: Literal::Bool(true),
     };
     let mut visitor = BoolVisitor::default();
-    let val = expr.visit(&mut visitor);
+    let val = expr.accept(&mut visitor);
     assert_eq!(val, true);
 }
 
@@ -67,7 +97,7 @@ where
     L: Expr,
     R: Expr,
 {
-    fn visit<V, O>(&self, visitor: &mut V) -> O
+    fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>,
     {
@@ -86,7 +116,7 @@ impl LiteralExpr {
 }
 
 impl Expr for LiteralExpr {
-    fn visit<V, O>(&self, visitor: &mut V) -> O
+    fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>,
     {
@@ -112,7 +142,7 @@ impl<R> Expr for UnaryExpr<R>
 where
     R: Expr,
 {
-    fn visit<V, O>(&self, visitor: &mut V) -> O
+    fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>,
     {
@@ -137,7 +167,7 @@ impl<E> Expr for GroupExpr<E>
 where
     E: Expr,
 {
-    fn visit<V, O>(&self, visitor: &mut V) -> O
+    fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>,
     {
