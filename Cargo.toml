@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.82"
 clap = { version = "4.5.4", features = ["derive"] }
+itertools = "0.12.1"
 strum = "0.26.2"
 strum_macros = "0.26.2"
 thiserror = "1.0.59"

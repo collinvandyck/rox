@@ -5,6 +5,7 @@ pub mod prelude;
 use std::fmt::Display;
 
 use anyhow::bail;
+use itertools::Itertools;
 use prelude::*;
 
 #[derive(thiserror::Error, Debug)]
@@ -31,6 +32,27 @@ impl Lox {
 
     pub fn clear_err(&mut self) {
         self.err = None;
+    }
+}
+
+struct Scanner {
+    source: String,
+    tokens: Vec<Token>,
+    chars: Vec<(usize, char)>,
+}
+
+impl Scanner {
+    fn new(source: String) -> Self {
+        let chars = source.char_indices().collect_vec();
+        Self {
+            source,
+            tokens: vec![],
+            chars,
+        }
+    }
+
+    fn scan_tokens(&mut self) -> Result<Vec<Token>> {
+        Ok(vec![])
     }
 }
 
