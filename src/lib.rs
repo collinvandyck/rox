@@ -28,14 +28,8 @@ impl Lox {
 
     pub fn run(&mut self, prog: String) -> Result<()> {
         let mut scanner = Scanner::new(prog);
-        match scanner.scan_tokens() {
-            Ok(tokens) => {
-                println!("{}", tokens.iter().map(|t| t.to_string()).join(" "));
-            }
-            Err(err) => {
-                error!("{err}");
-            }
-        }
+        let tokens = scanner.scan_tokens();
+        println!("{}", tokens.iter().map(|t| t.to_string()).join(" "));
         Ok(())
     }
 
@@ -71,16 +65,16 @@ impl Scanner {
         }
     }
 
-    fn scan_tokens(&mut self) -> Result<Vec<Token>> {
+    fn scan_tokens(&mut self) -> Vec<Token> {
         while !self.at_end() {
             self.start = self.current;
-            self.scan_token()?;
+            self.scan_token();
         }
-        self.add_token(TokenType::Eof);
-        Ok(self.tokens.clone())
+        self.add_token_lexeme(TokenType::Eof, Lexeme::default());
+        self.tokens.clone()
     }
 
-    fn scan_token(&mut self) -> Result<()> {
+    fn scan_token(&mut self) {
         use TokenType::*;
         let (idx, ch) = self.advance();
         match ch {
@@ -146,7 +140,6 @@ impl Scanner {
                 }
             }
         }
-        Ok(())
     }
 
     fn identifier(&mut self) {
@@ -190,6 +183,7 @@ impl Scanner {
             if self.peek() == '\n' {
                 self.line += 1;
             }
+            self.advance();
         }
         if self.at_end() {
             self.error("unterminated string");
@@ -431,9 +425,26 @@ mod tests {
                     },
                 ],
             ),
+            (
+                r#""foo""#,
+                vec![
+                    Token {
+                        typ: TokenType::String,
+                        lexeme: Lexeme::from("foo"),
+                        literal: Some(Literal::String("foo".into())),
+                        line: 1,
+                    },
+                    Token {
+                        typ: TokenType::Eof,
+                        lexeme: Lexeme::default(),
+                        literal: None,
+                        line: 1,
+                    },
+                ],
+            ),
         ] {
             let mut s = Scanner::new(prog);
-            let toks = s.scan_tokens().unwrap();
+            let toks = s.scan_tokens();
             assert_eq!(toks, ex, "prog '{prog}' produced {toks:#?}");
         }
     }
