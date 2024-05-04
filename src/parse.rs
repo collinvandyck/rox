@@ -30,15 +30,40 @@ impl Parser {
         todo!()
     }
 
-    fn current(&self) -> Token {
-        todo!()
+    fn check(&self, typ: TokenType) -> bool {
+        self.tokens.get(self.current).map(|t| t.typ) == Some(typ)
+    }
+
+    fn match_any(&mut self, types: impl IntoIterator<Item = TokenType>) -> bool {
+        for typ in types {
+            if self.check(typ) {
+                self.advance();
+                return true;
+            }
+        }
+        false
     }
 
     fn previous(&self) -> Token {
-        todo!()
+        self.token_at(self.current - 1)
     }
 
-    fn match_any(&mut self, typs: impl IntoIterator<Item = TokenType>) -> bool {
-        todo!()
+    fn current(&self) -> Token {
+        self.token_at(self.current)
+    }
+
+    fn token_at(&self, pos: usize) -> Token {
+        self.tokens[pos].clone()
+    }
+
+    fn advance(&mut self) -> Token {
+        if !self.at_end() {
+            self.current += 1;
+        }
+        self.previous()
+    }
+
+    fn at_end(&self) -> bool {
+        self.current >= self.tokens.len()
     }
 }
