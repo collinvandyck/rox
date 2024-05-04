@@ -43,7 +43,29 @@ impl Parser {
         expr
     }
 
+    // term → factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Expr {
+        let mut expr = self.factor();
+        while self.match_any([TokenType::Minus, TokenType::Plus]) {
+            let op = self.previous();
+            let right = self.factor();
+            expr = Expr::binary(expr, op, right);
+        }
+        expr
+    }
+
+    // fractor → unary ( ( "/" | "*" ) unary )* ;
+    fn factor(&mut self) -> Expr {
+        let mut expr = self.unary();
+        while self.match_any([TokenType::Slash, TokenType::Star]) {
+            let op = self.previous();
+            let right = self.unary();
+            expr = Expr::binary(expr, op, right);
+        }
+        expr
+    }
+
+    fn unary(&mut self) -> Expr {
         todo!()
     }
 
