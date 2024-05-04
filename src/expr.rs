@@ -54,10 +54,10 @@ impl Expr {
         V: Visitor<Output = O>,
     {
         match self {
-            Expr::Binary(b) => visitor.visit_binary(&b),
-            Expr::Literal(l) => visitor.visit_literal(&l),
-            Expr::Unary(u) => visitor.visit_unary(&u),
-            Expr::Group(g) => visitor.visit_group(&g),
+            Expr::Binary(b) => visitor.visit_binary(b),
+            Expr::Literal(l) => visitor.visit_literal(l),
+            Expr::Unary(u) => visitor.visit_unary(u),
+            Expr::Group(g) => visitor.visit_group(g),
         }
     }
 }

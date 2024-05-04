@@ -19,13 +19,14 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Default)]
 pub struct Lox {
     err: bool,
 }
 
 impl Lox {
     pub fn new() -> Self {
-        Self { err: false }
+        Self::default()
     }
 
     pub fn run(&mut self, prog: String) {
@@ -173,11 +174,11 @@ impl Scanner {
     }
 
     fn is_alpha(ch: char) -> bool {
-        (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_'
+        ch.is_ascii_uppercase() || ch.is_ascii_lowercase() || ch == '_'
     }
 
     fn is_digit(ch: char) -> bool {
-        ch >= '0' && ch <= '9'
+        ch.is_ascii_digit()
     }
 
     fn string(&mut self) {
@@ -275,7 +276,7 @@ impl Scanner {
     }
 
     fn lexeme_at(&self, start: usize, end: usize) -> Lexeme {
-        Lexeme(self.chars[start..end].into_iter().map(|t| t.1).collect())
+        Lexeme(self.chars[start..end].iter().map(|t| t.1).collect())
     }
 
     fn at_end(&self) -> bool {
