@@ -27,6 +27,15 @@ impl Lox {
     }
 
     pub fn run(&mut self, prog: String) -> Result<()> {
+        let mut scanner = Scanner::new(prog);
+        match scanner.scan_tokens() {
+            Ok(tokens) => {
+                println!("{}", tokens.iter().map(|t| t.to_string()).join(" "));
+            }
+            Err(err) => {
+                error!("{err}");
+            }
+        }
         Ok(())
     }
 
@@ -136,7 +145,7 @@ impl Scanner {
                 }
             }
         }
-        todo!()
+        Ok(())
     }
 
     fn identifier(&mut self) {
@@ -309,13 +318,18 @@ impl Lexeme {
     }
 }
 
-#[derive(Clone, Debug, derive_more::Display)]
-#[display(fmt = "{typ} {lexeme:?} {literal:?} {line}")]
+#[derive(Clone, Debug)]
 struct Token {
     pub typ: TokenType,
     pub lexeme: Lexeme,
     pub literal: Option<Literal>,
     pub line: usize,
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{} {} {}]", self.typ, self.lexeme, self.line)
+    }
 }
 
 impl Token {}
