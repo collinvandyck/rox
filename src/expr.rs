@@ -8,23 +8,25 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn binary(left: Expr, op: Token, right: Expr) -> Self {
+    pub fn binary(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
         Self::Binary(BinaryExpr {
             left: left.into(),
             op,
             right: right.into(),
         })
     }
-    pub fn literal(literal: Literal) -> Self {
-        Self::Literal(LiteralExpr { lit: literal })
+    pub fn literal(literal: impl Into<Literal>) -> Self {
+        Self::Literal(LiteralExpr {
+            lit: literal.into(),
+        })
     }
-    pub fn unary(op: Token, right: Expr) -> Self {
+    pub fn unary(op: Token, right: impl Into<Box<Expr>>) -> Self {
         Self::Unary(UnaryExpr {
             op,
             right: right.into(),
         })
     }
-    pub fn group(expr: Expr) -> Self {
+    pub fn group(expr: impl Into<Box<Expr>>) -> Self {
         Self::Group(GroupExpr { expr: expr.into() })
     }
 }
