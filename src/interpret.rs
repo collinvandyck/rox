@@ -2,6 +2,9 @@ use std::ops::Neg;
 
 use crate::prelude::*;
 
+#[derive(thiserror::Error, Debug)]
+pub enum Error {}
+
 #[derive(Default)]
 pub struct Interpreter;
 
