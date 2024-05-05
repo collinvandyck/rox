@@ -12,42 +12,31 @@ use itertools::Itertools;
 use prelude::*;
 use tracing_subscriber::field::display;
 
-#[derive(Default)]
-pub struct Lox {
-    err: bool,
+#[derive(thiserror::Error, Debug)]
+pub enum LoxError {
+    #[error(transparent)]
+    Scan(ScanError),
+    #[error(transparent)]
+    Parse(ParseError),
 }
+
+#[derive(Default)]
+pub struct Lox {}
 
 impl Lox {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn run(&mut self, prog: String) {
+    pub fn run(&mut self, prog: String) -> Result<(), LoxError> {
         let mut scanner = Scanner::new(prog);
-        let tokens = scanner.scan_tokens();
-        self.err = scanner.had_error();
-        if self.err {
-            return;
-        }
+        let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
-        let expr = match parser.parse() {
-            Ok(expr) => expr,
-            Err(err) => {
-                eprintln!("{err}");
-                return;
-            }
-        };
+        let expr = parser.parse().map_err(LoxError::Parse)?;
         let printer = AstPrinter {};
         let s = printer.print(&expr);
         println!("{s}");
-    }
-
-    pub fn had_error(&self) -> bool {
-        self.err
-    }
-
-    pub fn clear_err(&mut self) {
-        self.err = false;
+        Ok(())
     }
 }
 

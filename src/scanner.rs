@@ -1,9 +1,24 @@
 use crate::prelude::*;
 
+#[derive(Debug)]
+pub struct ScanError {
+    errs: Vec<LineError>,
+}
+
+impl std::error::Error for ScanError {}
+
+impl std::fmt::Display for ScanError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let msg = self.errs.iter().map(|err| err.to_string()).join("\n");
+        write!(f, "{msg}")
+    }
+}
+
 #[derive(thiserror::Error, Debug)]
-pub enum ScanError {
-    #[error("line: {line}: {msg}")]
-    Line { line: usize, msg: String },
+#[error("line: {line}: {msg}")]
+pub struct LineError {
+    line: usize,
+    msg: String,
 }
 
 #[derive(Default)]
@@ -14,7 +29,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
-    err: bool,
+    errs: Vec<LineError>,
 }
 
 impl Scanner {
@@ -29,17 +44,17 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Vec<Token> {
+    pub fn scan_tokens(mut self) -> Result<Vec<Token>, ScanError> {
         while !self.at_end() {
             self.start = self.current;
             self.scan_token();
         }
         self.add_token_lexeme(TokenType::Eof, Lexeme::default());
-        self.tokens.clone()
-    }
-
-    pub fn had_error(&self) -> bool {
-        self.err
+        if !self.errs.is_empty() {
+            Err(ScanError { errs: self.errs })
+        } else {
+            Ok(self.tokens)
+        }
     }
 
     fn scan_token(&mut self) {
@@ -199,12 +214,12 @@ impl Scanner {
     }
 
     fn error(&mut self, msg: &str) {
-        let err = ScanError::Line {
+        let err = LineError {
             line: self.line,
             msg: msg.to_string(),
         };
         eprintln!("{err}");
-        self.err = true;
+        self.errs.push(err);
     }
 
     fn advance(&mut self) -> (usize, char) {

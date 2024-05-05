@@ -15,31 +15,29 @@ fn main() -> Result<()> {
     } else {
         run_prompt()?
     };
-    if !ok {
-        std::process::exit(1);
-    }
     Ok(())
 }
 
-fn run_file(script: &Path) -> Result<bool> {
+fn run_file(script: &Path) -> Result<()> {
     let mut lox = Lox::new();
     let bs = fs::read(script)?;
     let prog = String::from_utf8(bs).context("script to utf8")?;
-    lox.run(prog);
-    Ok(!lox.had_error())
+    lox.run(prog)?;
+    Ok(())
 }
 
-fn run_prompt() -> Result<bool> {
+fn run_prompt() -> Result<()> {
     let mut lox = Lox::new();
     for line in stdin().lines() {
         let line = line?;
         if line.is_empty() {
             continue;
         }
-        lox.clear_err();
-        lox.run(line);
+        if let Err(err) = lox.run(line) {
+            eprintln!("{err}");
+        };
     }
-    Ok(!lox.had_error())
+    Ok(())
 }
 
 fn run(prog: String) -> Result<()> {
