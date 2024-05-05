@@ -37,10 +37,11 @@ impl Parser {
                 break;
             }
             match self.stmt() {
-                Ok(stmt) if errs.is_empty() => {
-                    stmts.push(stmt);
+                Ok(stmt) => {
+                    if errs.is_empty() {
+                        stmts.push(stmt);
+                    }
                 }
-                Ok(_stmt) => {} // ignore
                 Err(err) => {
                     errs.push(err);
                     self.synchronize();
