@@ -35,9 +35,8 @@ fn run_prompt() -> Result<()> {
         if line.is_empty() {
             continue;
         }
-        match lox.run(line) {
-            Ok(val) => println!("{}", val.to_lox()),
-            Err(err) => eprintln!("{err}"),
+        if let Err(err) = lox.run(line) {
+            eprintln!("{err}");
         }
     }
     Ok(())

@@ -21,8 +21,8 @@ pub enum Error {
 pub struct Interpreter;
 
 impl Interpreter {
-    pub fn interpret(expr: &Expr) -> Result<Literal, Error> {
-        Self.eval_expr(expr)
+    pub fn interpret(stmts: &[Stmt]) -> Result<(), Error> {
+        todo!()
     }
 }
 
@@ -96,30 +96,5 @@ impl ExprVisitor for Interpreter {
 
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
         self.eval_expr(&expr.expr)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::prelude::*;
-
-    #[test]
-    fn test_interpret_expr() {
-        for (prog, ex) in [
-            ("3", Literal::Number(3.0)),
-            ("3 + 4", Literal::Number(7.0)),
-            ("3 * 4", Literal::Number(12.0)),
-            ("4 / 2", Literal::Number(2.0)),
-            ("(1 + 3) * 5", Literal::Number(20.0)),
-            (r#""Coll" + "in""#, Literal::String(String::from("Collin"))),
-            (r#" ! "Col""#, Literal::Bool(false)),
-            (r#" !! "Col""#, Literal::Bool(true)),
-        ] {
-            //
-            let tokens = Scanner::new(prog).scan_tokens().unwrap();
-            let expr = Parser::new(tokens).parse().unwrap();
-            let lit = Interpreter::interpret(&expr).unwrap();
-            assert_eq!(lit, ex, "expected {prog} to evaluate to {ex}");
-        }
     }
 }

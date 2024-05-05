@@ -31,13 +31,13 @@ impl Lox {
         Self::default()
     }
 
-    pub fn run(&mut self, prog: String) -> Result<Literal, LoxError> {
+    pub fn run(&mut self, prog: String) -> Result<(), LoxError> {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
-        let expr = parser.parse().map_err(LoxError::Parse)?;
-        let val = Interpreter::interpret(&expr).map_err(LoxError::Interpret)?;
-        Ok(val)
+        let stmts = parser.parse().map_err(LoxError::Parse)?;
+        Interpreter::interpret(&stmts).map_err(LoxError::Interpret)?;
+        Ok(())
     }
 }
 

@@ -29,24 +29,29 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, ParseError> {
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
+        let mut stmts = vec![];
         let mut errs = vec![];
         loop {
             if self.at_end() {
                 break;
             }
-            match self.expr() {
-                Ok(expr) if errs.is_empty() => {
-                    return Ok(expr);
+            match self.stmt() {
+                Ok(stmt) if errs.is_empty() => {
+                    stmts.push(stmt);
                 }
-                Ok(_expr) => {} // ignore
+                Ok(_stmt) => {} // ignore
                 Err(err) => {
                     errs.push(err);
                     self.synchronize();
                 }
             }
         }
-        Err(ParseError::Failed { errs })
+        if errs.is_empty() {
+            Ok(stmts)
+        } else {
+            Err(ParseError::Failed { errs })
+        }
     }
 
     fn synchronize(&mut self) {
