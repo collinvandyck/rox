@@ -80,11 +80,15 @@ impl Parser {
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, LineError> {
-        todo!()
+        let expr = self.expr()?;
+        self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Print(PrintStmt { expr }))
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, LineError> {
-        todo!()
+        let expr = self.expr()?;
+        self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Expr(ExprStmt { expr }))
     }
 
     // expression -> equality ;
