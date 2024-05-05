@@ -3,6 +3,7 @@ pub use anyhow::{Context, Result};
 pub use clap::Parser;
 pub use expr::*;
 pub use parse::*;
+pub use scanner::*;
 pub use std::{
     fs,
     io::stdin,

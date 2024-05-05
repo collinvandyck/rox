@@ -34,8 +34,12 @@ impl Parser {
             Ok(expr) => return Ok(expr),
             Err(err) => {
                 eprintln!("{err}");
-                while let Err(err) = self.expression() {
-                    eprintln!("{err}");
+                self.synchronize();
+                while !self.at_end() {
+                    if let Err(err) = self.expression() {
+                        eprintln!("{err}");
+                        self.synchronize();
+                    }
                 }
             }
         }
