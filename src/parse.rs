@@ -18,6 +18,8 @@ pub enum InternalError {
         expected: TokenType,
         actual: TokenType,
     },
+    #[error("expected expression")]
+    ExpectedExpr,
 }
 
 impl Parser {
@@ -148,7 +150,7 @@ impl Parser {
             self.consume(TokenType::RightParen)?;
             return Ok(Expr::group(expr));
         }
-        todo!()
+        Err(InternalError::ExpectedExpr)
     }
 
     fn match_any(&mut self, types: impl IntoIterator<Item = TokenType>) -> bool {
