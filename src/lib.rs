@@ -44,9 +44,9 @@ impl Lox {
                 return;
             }
         };
-        println!("Pringint {expr:#?}");
         let printer = AstPrinter {};
-        printer.print(&expr);
+        let s = printer.print(&expr);
+        println!("{s}");
     }
 
     pub fn had_error(&self) -> bool {
