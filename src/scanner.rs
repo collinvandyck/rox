@@ -346,14 +346,14 @@ pub enum LiteralError {
 }
 
 impl Literal {
-    pub fn num(&self) -> Result<f64, LiteralError> {
-        if let Self::Number(val) = self {
-            Ok(*val)
-        } else {
-            Err(LiteralError::NotANumber)
+    pub fn to_lox(&self) -> String {
+        match self {
+            Literal::Number(v) => v.to_string(),
+            Literal::String(s) => s.clone(),
+            Literal::Bool(b) => b.to_string(),
+            Literal::Nil => "nil".to_string(),
         }
     }
-
     pub fn truthy(&self) -> bool {
         match self {
             Self::Number(_) | Self::String(_) => true,

@@ -12,13 +12,16 @@ pub enum Error {
 
     #[error("invalid op: {op} for binary expr")]
     InvalidBinaryOp { op: Token },
+
+    #[error("divide by zero detected at line {line}")]
+    DivideByZero { line: usize },
 }
 
 #[derive(Default)]
 pub struct Interpreter;
 
 impl Interpreter {
-    fn interpret(expr: &Expr) -> Result<Literal, Error> {
+    pub fn interpret(expr: &Expr) -> Result<Literal, Error> {
         Self.eval_expr(expr)
     }
 }
@@ -33,10 +36,17 @@ impl ExprVisitor for Interpreter {
         let op = &expr.op;
         Ok(match op.typ {
             Minus | Slash | Star | Greater | GreaterEqual | Less | LessEqual => {
-                let (left, right) = Self::check_nums(&expr.op, &left, &right)?;
+                let (Literal::Number(left), Literal::Number(right)) = (left, right) else {
+                    return Err(Error::NumbersRequired { op: op.clone() });
+                };
                 match op.typ {
                     Minus => (left - right).into(),
-                    Slash => (left / right).into(),
+                    Slash => {
+                        if right == 0.0 {
+                            return Err(Error::DivideByZero { line: op.line });
+                        }
+                        (left / right).into()
+                    }
                     Star => (left * right).into(),
                     Greater => (left > right).into(),
                     GreaterEqual => (left >= right).into(),
@@ -86,15 +96,6 @@ impl ExprVisitor for Interpreter {
 
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
         self.eval_expr(&expr.expr)
-    }
-}
-
-impl Interpreter {
-    fn check_nums(op: &Token, left: &Literal, right: &Literal) -> Result<(f64, f64), Error> {
-        match (left, right) {
-            (Literal::Number(left), Literal::Number(right)) => Ok((*left, *right)),
-            _ => Err(Error::NumbersRequired { op: op.clone() }),
-        }
     }
 }
 

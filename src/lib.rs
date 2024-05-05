@@ -15,9 +15,11 @@ use tracing_subscriber::field::display;
 #[derive(thiserror::Error, Debug)]
 pub enum LoxError {
     #[error(transparent)]
-    Scan(ScanError),
+    Scan(#[from] ScanError),
     #[error(transparent)]
-    Parse(ParseError),
+    Parse(#[from] ParseError),
+    #[error(transparent)]
+    Interpret(#[from] interpret::Error),
 }
 
 #[derive(Default)]
@@ -28,15 +30,13 @@ impl Lox {
         Self::default()
     }
 
-    pub fn run(&mut self, prog: String) -> Result<(), LoxError> {
+    pub fn run(&mut self, prog: String) -> Result<Literal, LoxError> {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
         let expr = parser.parse().map_err(LoxError::Parse)?;
-        let printer = AstPrinter::default();
-        let s = printer.print(&expr);
-        println!("{s}");
-        Ok(())
+        let val = Interpreter::interpret(&expr).map_err(LoxError::Interpret)?;
+        Ok(val)
     }
 }
 

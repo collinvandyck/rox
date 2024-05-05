@@ -7,7 +7,7 @@ pub struct Parser {
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {
-    #[error("parsing failed")]
+    #[error("parsing failed:\n{}", errs.iter().map(|l| l.to_string()).join("\n"))]
     Failed { errs: Vec<LineError> },
 }
 
