@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::{collections::HashMap, ops::Neg};
 
 use crate::prelude::*;
 
@@ -18,7 +18,9 @@ pub enum Error {
 }
 
 #[derive(Default)]
-pub struct Interpreter;
+pub struct Interpreter {
+    vars: HashMap<Token, Literal>,
+}
 
 impl Interpreter {
     pub fn interpret(&mut self, stmts: &[Stmt]) -> Result<(), Error> {
@@ -99,6 +101,10 @@ impl ExprVisitor for Interpreter {
                 })
             }
         })
+    }
+
+    fn visit_var(&mut self, expr: &VarExpr) -> Self::Output {
+        todo!()
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {

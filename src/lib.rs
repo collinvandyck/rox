@@ -36,7 +36,9 @@ impl Lox {
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
         let stmts = parser.parse().map_err(LoxError::Parse)?;
-        Interpreter.interpret(&stmts).map_err(LoxError::Interpret)?;
+        Interpreter::default()
+            .interpret(&stmts)
+            .map_err(LoxError::Interpret)?;
         Ok(())
     }
 }
@@ -69,7 +71,7 @@ mod tests {
         assert_eq!(errs.len(), 1);
         assert_eq!(
             errs.first().map(|err| err.to_string()).unwrap(),
-            "line 1: expected expression"
+            "line 1: expected Semicolon but was instead Eof"
         );
     }
 

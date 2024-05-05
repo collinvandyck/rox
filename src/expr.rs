@@ -6,6 +6,7 @@ pub enum Expr {
     Literal(LiteralExpr),
     Unary(UnaryExpr),
     Group(GroupExpr),
+    Var(VarExpr),
 }
 
 impl Expr {
@@ -55,16 +56,22 @@ pub struct GroupExpr {
     pub expr: Box<Expr>,
 }
 
+#[derive(Debug)]
+pub struct VarExpr {
+    pub name: Token,
+}
+
 impl Expr {
     pub fn accept<V, O>(&self, visitor: &mut V) -> O
     where
         V: ExprVisitor<Output = O>,
     {
         match self {
-            Expr::Binary(b) => visitor.visit_binary(b),
-            Expr::Literal(l) => visitor.visit_literal(l),
-            Expr::Unary(u) => visitor.visit_unary(u),
-            Expr::Group(g) => visitor.visit_group(g),
+            Expr::Binary(e) => visitor.visit_binary(e),
+            Expr::Literal(e) => visitor.visit_literal(e),
+            Expr::Unary(e) => visitor.visit_unary(e),
+            Expr::Group(e) => visitor.visit_group(e),
+            Expr::Var(e) => visitor.visit_var(e),
         }
     }
 }
@@ -75,34 +82,5 @@ pub trait ExprVisitor {
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output;
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output;
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output;
-}
-
-#[derive(Default)]
-pub struct AstPrinter {}
-
-impl AstPrinter {
-    pub fn print(mut self, expr: &Expr) -> String {
-        expr.accept(&mut self)
-    }
-}
-
-impl ExprVisitor for AstPrinter {
-    type Output = String;
-    fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
-        format!("( group {} )", expr.expr.accept(self))
-    }
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
-        format!("{}", expr.value)
-    }
-    fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
-        format!(
-            "( {} {} {})",
-            expr.op.lexeme,
-            expr.left.accept(self),
-            expr.right.accept(self)
-        )
-    }
-    fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
-        format!("( {} {} )", expr.op.lexeme, expr.right.accept(self))
-    }
+    fn visit_var(&mut self, expr: &VarExpr) -> Self::Output;
 }

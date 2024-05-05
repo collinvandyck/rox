@@ -36,7 +36,7 @@ impl Parser {
             if self.at_end() {
                 break;
             }
-            match self.stmt() {
+            match self.decl() {
                 Ok(stmt) => {
                     if errs.is_empty() {
                         stmts.push(stmt);
@@ -76,6 +76,23 @@ impl Parser {
             }
             self.advance();
         }
+    }
+
+    fn decl(&mut self) -> Result<Stmt, LineError> {
+        if self.match_any([TokenType::Var]) {
+            return self.var_decl();
+        }
+        self.stmt()
+    }
+
+    fn var_decl(&mut self) -> Result<Stmt, LineError> {
+        let name = self.consume(TokenType::Identifier)?;
+        let initializer = self
+            .match_any([TokenType::Equal])
+            .then(|| self.expr())
+            .transpose()?;
+        self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Var(VarStmt { name, initializer }))
     }
 
     fn stmt(&mut self) -> Result<Stmt, LineError> {
@@ -178,6 +195,10 @@ impl Parser {
             let prev = self.previous();
             return Ok(Expr::literal(prev.literal.unwrap()));
         }
+        if self.match_any([TokenType::Identifier]) {
+            let name = self.previous();
+            return Ok(Expr::Var(VarExpr { name }));
+        }
         if self.match_any([TokenType::LeftParen]) {
             let expr = self.expr()?;
             self.consume(TokenType::RightParen)?;
@@ -198,9 +219,9 @@ impl Parser {
         false
     }
 
-    fn consume(&mut self, typ: TokenType) -> Result<(), LineError> {
+    fn consume(&mut self, typ: TokenType) -> Result<Token, LineError> {
         if self.match_any([typ]) {
-            return Ok(());
+            return Ok(self.previous());
         }
         Err(LineError::Expected {
             expected: typ,

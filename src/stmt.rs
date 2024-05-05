@@ -20,7 +20,7 @@ pub struct PrintStmt {
 #[derive(Debug)]
 pub struct VarStmt {
     pub name: Token,
-    pub initializer: Expr,
+    pub initializer: Option<Expr>,
 }
 
 impl Stmt {
