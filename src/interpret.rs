@@ -15,11 +15,38 @@ pub enum Error {
 
     #[error("divide by zero detected at line {line}")]
     DivideByZero { line: usize },
+
+    #[error(transparent)]
+    Env(#[from] EnvError),
 }
 
 #[derive(Default)]
-pub struct Interpreter {
-    vars: HashMap<Token, Literal>,
+pub struct Interpreter {}
+
+#[derive(thiserror::Error, Debug)]
+pub enum EnvError {
+    #[error("undefined variable '{name}'")]
+    Undefined { name: String },
+}
+
+#[derive(Default)]
+struct Environment {
+    vars: HashMap<String, Literal>,
+}
+
+impl Environment {
+    fn define(&mut self, name: String, val: Literal) {
+        self.vars.insert(name, val);
+    }
+
+    fn get(&self, tok: Token) -> Result<Literal, EnvError> {
+        self.vars
+            .get(tok.lexeme.as_ref())
+            .cloned()
+            .ok_or_else(|| EnvError::Undefined {
+                name: tok.lexeme.as_ref().clone(),
+            })
+    }
 }
 
 impl Interpreter {

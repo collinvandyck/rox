@@ -266,7 +266,9 @@ impl Scanner {
     }
 }
 
-#[derive(Default, Clone, Debug, derive_more::Display, PartialEq, derive_more::From)]
+#[derive(
+    Default, Clone, Debug, derive_more::Display, PartialEq, derive_more::From, derive_more::AsRef,
+)]
 pub struct Lexeme(String);
 
 impl From<&str> for Lexeme {
