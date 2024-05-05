@@ -13,7 +13,7 @@ pub enum ParseError {
 
 #[derive(thiserror::Error, Debug)]
 pub enum InternalError {
-    #[error("expected {expected} but was instead {actual}")]
+    #[error("line {line}: expected {expected} but was instead {actual}")]
     Expected {
         expected: TokenType,
         actual: TokenType,
