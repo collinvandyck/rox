@@ -339,12 +339,18 @@ pub enum Literal {
     Nil,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum LiteralError {
+    #[error("value was not a number")]
+    NotANumber,
+}
+
 impl Literal {
-    pub fn num(&self) -> f64 {
+    pub fn num(&self) -> Result<f64, LiteralError> {
         if let Self::Number(val) = self {
-            *val
+            Ok(*val)
         } else {
-            panic!("not a number");
+            Err(LiteralError::NotANumber)
         }
     }
 

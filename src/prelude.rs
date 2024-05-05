@@ -1,5 +1,4 @@
 pub use crate::*;
-pub use anyhow::{Context, Result};
 pub use expr::*;
 pub use interpret::*;
 pub use parse::*;

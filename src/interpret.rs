@@ -3,7 +3,16 @@ use std::ops::Neg;
 use crate::prelude::*;
 
 #[derive(thiserror::Error, Debug)]
-pub enum Error {}
+pub enum Error {
+    #[error("expected numbers for op: {op}")]
+    NumbersRequired { op: Token },
+
+    #[error("expected two numbers or two strings for op: {op}")]
+    TwoNumbersOrStringsRequired { op: Token },
+
+    #[error("invalid op: {op} for binary expr")]
+    InvalidBinaryOp { op: Token },
+}
 
 #[derive(Default)]
 pub struct Interpreter;
@@ -15,33 +24,55 @@ impl ExprVisitor for Interpreter {
         use TokenType::*;
         let left = self.eval_expr(&expr.left)?;
         let right = self.eval_expr(&expr.right)?;
-        Ok(match expr.op.typ {
-            Minus => (left.num() - right.num()).into(),
-            Slash => (left.num() / right.num()).into(),
-            Star => (left.num() * right.num()).into(),
+        let op = &expr.op;
+        Ok(match op.typ {
+            Minus | Slash | Star | Greater | GreaterEqual | Less | LessEqual => {
+                let (left, right) = Self::check_nums(&expr.op, &left, &right)?;
+                match op.typ {
+                    Minus => (left - right).into(),
+                    Slash => (left / right).into(),
+                    Star => (left * right).into(),
+                    Greater => (left > right).into(),
+                    GreaterEqual => (left >= right).into(),
+                    Less => (left < right).into(),
+                    LessEqual => (left < right).into(),
+                    _ => unreachable!(),
+                }
+            }
             Plus => match (left, right) {
                 (Literal::Number(left), Literal::Number(right)) => (left + right).into(),
                 (Literal::String(left), Literal::String(right)) => format!("{left}{right}").into(),
-                _ => unreachable!(),
+                _ => {
+                    return Err(Error::NumbersRequired {
+                        op: expr.op.clone(),
+                    })
+                }
             },
-            Greater => (left.num() > right.num()).into(),
-            GreaterEqual => (left.num() >= right.num()).into(),
-            Less => (left.num() < right.num()).into(),
-            LessEqual => (left.num() <= right.num()).into(),
             BangEqual => (left != right).into(),
             EqualEqual => (left == right).into(),
-            _ => unreachable!(),
+            _ => {
+                return Err(Error::InvalidBinaryOp {
+                    op: expr.op.clone(),
+                })
+            }
         })
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
-        Ok(expr.value.clone().into())
+        Ok(expr.value.clone())
     }
 
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
         let right = self.eval_expr(&expr.right)?;
         Ok(match expr.op.typ {
-            TokenType::Minus => (-right.num()).into(),
+            TokenType::Minus => {
+                let Literal::Number(right) = &right else {
+                    return Err(Error::NumbersRequired {
+                        op: expr.op.clone(),
+                    });
+                };
+                (-right).into()
+            }
             TokenType::Bang => (!right.truthy()).into(),
             _ => unreachable!(),
         })
@@ -49,6 +80,15 @@ impl ExprVisitor for Interpreter {
 
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
         self.eval_expr(&expr.expr)
+    }
+}
+
+impl Interpreter {
+    fn check_nums(op: &Token, left: &Literal, right: &Literal) -> Result<(f64, f64), Error> {
+        match (left, right) {
+            (Literal::Number(left), Literal::Number(right)) => Ok((*left, *right)),
+            _ => Err(Error::NumbersRequired { op: op.clone() }),
+        }
     }
 }
 
@@ -69,9 +109,9 @@ mod tests {
             (r#" !! "Col""#, Literal::Bool(true)),
         ] {
             //
-            let tokens = Scanner::new(&prog).scan_tokens().unwrap();
+            let tokens = Scanner::new(prog).scan_tokens().unwrap();
             let expr = Parser::new(tokens).parse().unwrap();
-            let lit = Interpreter::default().eval_expr(&expr).unwrap();
+            let lit = Interpreter.eval_expr(&expr).unwrap();
             assert_eq!(lit, ex, "expected {prog} to evaluate to {ex}");
         }
     }
