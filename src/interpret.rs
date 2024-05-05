@@ -15,6 +15,6 @@ impl ExprVisitor for Interpreter {
         todo!()
     }
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
-        todo!()
+        self.evaluate_expr(&expr.expr)
     }
 }

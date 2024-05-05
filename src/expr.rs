@@ -75,6 +75,13 @@ pub trait ExprVisitor {
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output;
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output;
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output;
+
+    fn evaluate_expr(&mut self, expr: &Expr) -> Self::Output
+    where
+        Self: Sized,
+    {
+        expr.accept(self)
+    }
 }
 
 #[derive(Default)]
