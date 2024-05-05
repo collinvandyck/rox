@@ -113,7 +113,7 @@ mod tests {
             ),
         ] {
             let mut s = Scanner::new(prog);
-            let toks = s.scan_tokens();
+            let toks = s.scan_tokens().unwrap();
             assert_eq!(toks, ex, "prog '{prog}' produced {toks:#?}");
         }
     }

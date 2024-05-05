@@ -10,11 +10,11 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
     tracing_subscriber::fmt().init();
-    let ok = if let Some(script) = args.script {
+    if let Some(script) = args.script {
         run_file(&script)?
     } else {
         run_prompt()?
-    };
+    }
     Ok(())
 }
 
