@@ -33,7 +33,7 @@ impl ExprVisitor for Interpreter {
         match expr.op.typ {
             TokenType::Minus => (-right.num()).into(),
             TokenType::Bang => (!right.truthy()).into(),
-            v => panic!("invalid op type: {v}"),
+            _ => unreachable!(),
         }
     }
 
