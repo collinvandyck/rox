@@ -9,13 +9,13 @@ pub enum Error {}
 pub struct Interpreter;
 
 impl ExprVisitor for Interpreter {
-    type Output = Literal;
+    type Output = Result<Literal, Error>;
 
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         use TokenType::*;
-        let left = self.eval_expr(&expr.left);
-        let right = self.eval_expr(&expr.right);
-        match expr.op.typ {
+        let left = self.eval_expr(&expr.left)?;
+        let right = self.eval_expr(&expr.right)?;
+        Ok(match expr.op.typ {
             Minus => (left.num() - right.num()).into(),
             Slash => (left.num() / right.num()).into(),
             Star => (left.num() * right.num()).into(),
@@ -31,20 +31,20 @@ impl ExprVisitor for Interpreter {
             BangEqual => (left != right).into(),
             EqualEqual => (left == right).into(),
             _ => unreachable!(),
-        }
+        })
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
-        expr.value.clone().into()
+        Ok(expr.value.clone().into())
     }
 
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
-        let right = self.eval_expr(&expr.right);
-        match expr.op.typ {
+        let right = self.eval_expr(&expr.right)?;
+        Ok(match expr.op.typ {
             TokenType::Minus => (-right.num()).into(),
             TokenType::Bang => (!right.truthy()).into(),
             _ => unreachable!(),
-        }
+        })
     }
 
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
@@ -71,7 +71,7 @@ mod tests {
             //
             let tokens = Scanner::new(&prog).scan_tokens().unwrap();
             let expr = Parser::new(tokens).parse().unwrap();
-            let lit = Interpreter::default().eval_expr(&expr);
+            let lit = Interpreter::default().eval_expr(&expr).unwrap();
             assert_eq!(lit, ex, "expected {prog} to evaluate to {ex}");
         }
     }
