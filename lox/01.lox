@@ -1,5 +1,5 @@
 print "one";
 print true;
 print 2 + 1;
-var x = 42;
-print x;
+var x = 41;
+print x + 1; // prints 42

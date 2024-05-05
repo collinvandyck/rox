@@ -21,12 +21,14 @@ pub enum Error {
 }
 
 #[derive(Default)]
-pub struct Interpreter {}
+pub struct Interpreter {
+    env: Environment,
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum EnvError {
-    #[error("undefined variable '{name}'")]
-    Undefined { name: String },
+    #[error("undefined variable '{}'", token.lexeme)]
+    Undefined { token: Token },
 }
 
 #[derive(Default)]
@@ -35,16 +37,16 @@ struct Environment {
 }
 
 impl Environment {
-    fn define(&mut self, name: String, val: Literal) {
-        self.vars.insert(name, val);
+    fn define(&mut self, name: impl AsRef<str>, val: Literal) {
+        self.vars.insert(name.as_ref().to_string(), val);
     }
 
-    fn get(&self, tok: Token) -> Result<Literal, EnvError> {
+    fn get(&self, token: &Token) -> Result<Literal, EnvError> {
         self.vars
-            .get(tok.lexeme.as_ref())
+            .get(token.lexeme.as_ref())
             .cloned()
             .ok_or_else(|| EnvError::Undefined {
-                name: tok.lexeme.as_ref().clone(),
+                token: token.clone(),
             })
     }
 }
@@ -78,7 +80,14 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
     fn visit_var(&mut self, expr: &VarStmt) -> Self::Output {
-        todo!()
+        let value: Literal = expr
+            .initializer
+            .as_ref()
+            .map(|i| self.evaluate(i))
+            .transpose()?
+            .unwrap_or_else(|| Literal::Nil);
+        self.env.define(expr.name.lexeme.as_ref(), value);
+        Ok(())
     }
 }
 
@@ -131,7 +140,7 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_var(&mut self, expr: &VarExpr) -> Self::Output {
-        todo!()
+        Ok(self.env.get(&expr.name)?)
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
