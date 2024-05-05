@@ -33,7 +33,20 @@ impl Lox {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens();
         self.err = scanner.err;
-        println!("{}", tokens.iter().map(|t| t.to_string()).join(" "));
+        if self.err {
+            return;
+        }
+        let mut parser = parse::Parser::new(tokens);
+        let expr = match parser.parse() {
+            Ok(expr) => expr,
+            Err(err) => {
+                eprintln!("{err}");
+                return;
+            }
+        };
+        println!("Pringint {expr:#?}");
+        let printer = AstPrinter {};
+        printer.print(&expr);
     }
 
     pub fn had_error(&self) -> bool {

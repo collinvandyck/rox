@@ -1,5 +1,6 @@
 use crate::{prelude::*, Literal};
 
+#[derive(Debug)]
 pub enum Expr {
     Binary(BinaryExpr),
     Literal(LiteralExpr),
@@ -31,21 +32,25 @@ impl Expr {
     }
 }
 
+#[derive(Debug)]
 pub struct BinaryExpr {
     left: Box<Expr>,
     op: Token,
     right: Box<Expr>,
 }
 
+#[derive(Debug)]
 pub struct LiteralExpr {
     literal: Literal,
 }
 
+#[derive(Debug)]
 pub struct UnaryExpr {
     op: Token,
     right: Box<Expr>,
 }
 
+#[derive(Debug)]
 pub struct GroupExpr {
     expr: Box<Expr>,
 }
