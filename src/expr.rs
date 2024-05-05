@@ -7,6 +7,7 @@ pub enum Expr {
     Unary(UnaryExpr),
     Group(GroupExpr),
     Var(VarExpr),
+    Assign(AssignExpr),
 }
 
 impl Expr {
@@ -31,6 +32,12 @@ impl Expr {
     pub fn group(expr: impl Into<Box<Expr>>) -> Self {
         Self::Group(GroupExpr { expr: expr.into() })
     }
+}
+
+#[derive(Debug)]
+pub struct AssignExpr {
+    pub name: Token,
+    pub value: Box<Expr>,
 }
 
 #[derive(Debug)]
@@ -72,6 +79,7 @@ impl Expr {
             Expr::Unary(e) => visitor.visit_unary(e),
             Expr::Group(e) => visitor.visit_group(e),
             Expr::Var(e) => visitor.visit_var(e),
+            Expr::Assign(e) => visitor.visit_assign(e),
         }
     }
 }
@@ -83,4 +91,5 @@ pub trait ExprVisitor {
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output;
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output;
     fn visit_var(&mut self, expr: &VarExpr) -> Self::Output;
+    fn visit_assign(&mut self, expr: &AssignExpr) -> Self::Output;
 }

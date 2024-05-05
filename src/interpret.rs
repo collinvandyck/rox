@@ -94,6 +94,10 @@ impl StmtVisitor for Interpreter {
 impl ExprVisitor for Interpreter {
     type Output = Result<Literal, Error>;
 
+    fn visit_assign(&mut self, expr: &AssignExpr) -> Self::Output {
+        todo!()
+    }
+
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         use TokenType::*;
         let left = self.evaluate(&expr.left)?;
