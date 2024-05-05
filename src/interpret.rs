@@ -17,6 +17,12 @@ pub enum Error {
 #[derive(Default)]
 pub struct Interpreter;
 
+impl Interpreter {
+    fn interpret(expr: &Expr) -> Result<Literal, Error> {
+        Self.eval_expr(expr)
+    }
+}
+
 impl ExprVisitor for Interpreter {
     type Output = Result<Literal, Error>;
 
@@ -111,7 +117,7 @@ mod tests {
             //
             let tokens = Scanner::new(prog).scan_tokens().unwrap();
             let expr = Parser::new(tokens).parse().unwrap();
-            let lit = Interpreter.eval_expr(&expr).unwrap();
+            let lit = Interpreter::interpret(&expr).unwrap();
             assert_eq!(lit, ex, "expected {prog} to evaluate to {ex}");
         }
     }
