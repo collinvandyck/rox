@@ -17,6 +17,7 @@ pub enum InternalError {
     Expected {
         expected: TokenType,
         actual: TokenType,
+        line: usize,
     },
     #[error("expected expression")]
     ExpectedExpr,
@@ -170,6 +171,7 @@ impl Parser {
         Err(InternalError::Expected {
             expected: typ,
             actual: self.peek().typ,
+            line: self.peek().line,
         })
     }
 
