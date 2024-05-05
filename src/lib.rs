@@ -53,7 +53,7 @@ impl Lox {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse::Parser, Lexeme, Literal, Lox, Scanner, Token, TokenType};
+    use crate::{parse::Parser, Lexeme, Literal, Lox, ParseError, Scanner, Token, TokenType};
     use std::{sync::mpsc, thread, time::Duration};
 
     #[test]
@@ -73,11 +73,7 @@ mod tests {
             },
         ];
         let mut parser = Parser::new(toks);
-        let (tx, rx) = mpsc::channel();
-        thread::spawn(move || {
-            tx.send(parser.parse().unwrap());
-        });
-        let res = rx.recv_timeout(Duration::from_secs(1)).unwrap();
+        assert!(matches!(parser.parse(), Err(ParseError::Failed)));
     }
 
     #[test]
