@@ -51,9 +51,7 @@ impl ExprVisitor for Interpreter {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse::Parser, ExprVisitor, Literal, Scanner};
-
-    use super::Interpreter;
+    use crate::prelude::*;
 
     #[test]
     fn test_interpret_expr() {
