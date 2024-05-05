@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 pub mod expr;
+pub mod interpret;
 pub mod parse;
 pub mod prelude;
 pub mod scanner;

@@ -58,7 +58,7 @@ pub struct GroupExpr {
 impl Expr {
     pub fn accept<V, O>(&self, visitor: &mut V) -> O
     where
-        V: Visitor<Output = O>,
+        V: ExprVisitor<Output = O>,
     {
         match self {
             Expr::Binary(b) => visitor.visit_binary(b),
@@ -69,7 +69,7 @@ impl Expr {
     }
 }
 
-pub trait Visitor {
+pub trait ExprVisitor {
     type Output;
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output;
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output;
@@ -86,7 +86,7 @@ impl AstPrinter {
     }
 }
 
-impl Visitor for AstPrinter {
+impl ExprVisitor for AstPrinter {
     type Output = String;
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
         format!("( group {} )", expr.expr.accept(self))
