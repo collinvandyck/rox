@@ -9,12 +9,17 @@ impl ExprVisitor for Interpreter {
 
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         use TokenType::*;
-        let left = self.eval_expr(&expr.left).number();
-        let right = self.eval_expr(&expr.right).number();
+        let left = self.eval_expr(&expr.left);
+        let right = self.eval_expr(&expr.right);
         match expr.op.typ {
-            Minus => (left - right).into(),
-            Slash => (left / right).into(),
-            Star => (left * right).into(),
+            Minus => (left.num() - right.num()).into(),
+            Slash => (left.num() / right.num()).into(),
+            Star => (left.num() * right.num()).into(),
+            Plus => match (left.lit, right.lit) {
+                (Literal::Number(left), Literal::Number(right)) => (left + right).into(),
+                (Literal::String(left), Literal::String(right)) => format!("{left}{right}").into(),
+                _ => unreachable!(),
+            },
             _ => unreachable!(),
         }
     }
@@ -26,7 +31,7 @@ impl ExprVisitor for Interpreter {
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
         let right = self.eval_expr(&expr.right);
         match expr.op.typ {
-            TokenType::Minus => (-right.number()).into(),
+            TokenType::Minus => (-right.num()).into(),
             TokenType::Bang => (!right.truthy()).into(),
             v => panic!("invalid op type: {v}"),
         }
@@ -58,8 +63,16 @@ impl From<bool> for Value {
     }
 }
 
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value {
+            lit: Literal::String(value),
+        }
+    }
+}
+
 impl Value {
-    fn number(&self) -> f64 {
+    fn num(&self) -> f64 {
         if let Literal::Number(v) = self.lit {
             v
         } else {
