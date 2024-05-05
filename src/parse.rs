@@ -19,8 +19,8 @@ pub enum InternalError {
         actual: TokenType,
         line: usize,
     },
-    #[error("expected expression")]
-    ExpectedExpr,
+    #[error("line {line}: expected expression")]
+    ExpectedExpr { line: usize },
 }
 
 impl Parser {
@@ -151,7 +151,9 @@ impl Parser {
             self.consume(TokenType::RightParen)?;
             return Ok(Expr::group(expr));
         }
-        Err(InternalError::ExpectedExpr)
+        Err(InternalError::ExpectedExpr {
+            line: self.peek().line,
+        })
     }
 
     fn match_any(&mut self, types: impl IntoIterator<Item = TokenType>) -> bool {
