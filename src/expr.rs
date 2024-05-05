@@ -18,7 +18,7 @@ impl Expr {
     }
     pub fn literal(literal: impl Into<Literal>) -> Self {
         Self::Literal(LiteralExpr {
-            literal: literal.into(),
+            value: literal.into(),
         })
     }
     pub fn unary(op: Token, right: impl Into<Box<Expr>>) -> Self {
@@ -34,25 +34,25 @@ impl Expr {
 
 #[derive(Debug)]
 pub struct BinaryExpr {
-    left: Box<Expr>,
-    op: Token,
-    right: Box<Expr>,
+    pub left: Box<Expr>,
+    pub op: Token,
+    pub right: Box<Expr>,
 }
 
 #[derive(Debug)]
 pub struct LiteralExpr {
-    literal: Literal,
+    pub value: Literal,
 }
 
 #[derive(Debug)]
 pub struct UnaryExpr {
-    op: Token,
-    right: Box<Expr>,
+    pub op: Token,
+    pub right: Box<Expr>,
 }
 
 #[derive(Debug)]
 pub struct GroupExpr {
-    expr: Box<Expr>,
+    pub expr: Box<Expr>,
 }
 
 impl Expr {
@@ -92,7 +92,7 @@ impl ExprVisitor for AstPrinter {
         format!("( group {} )", expr.expr.accept(self))
     }
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
-        format!("{}", expr.literal)
+        format!("{}", expr.value)
     }
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         format!(
