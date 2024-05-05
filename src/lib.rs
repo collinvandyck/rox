@@ -5,11 +5,10 @@ pub mod parse;
 pub mod prelude;
 pub mod scanner;
 
-use std::fmt::Display;
-
 use anyhow::bail;
 use itertools::Itertools;
 use prelude::*;
+use std::fmt::Display;
 use tracing_subscriber::field::display;
 
 #[derive(thiserror::Error, Debug)]
@@ -33,7 +32,7 @@ impl Lox {
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
         let expr = parser.parse().map_err(LoxError::Parse)?;
-        let printer = AstPrinter {};
+        let printer = AstPrinter::default();
         let s = printer.print(&expr);
         println!("{s}");
         Ok(())
@@ -62,7 +61,14 @@ mod tests {
             },
         ];
         let mut parser = Parser::new(toks);
-        assert!(matches!(parser.parse(), Err(ParseError::Failed)));
+        let Err(ParseError::Failed { errs }) = parser.parse() else {
+            panic!("should have failed");
+        };
+        assert_eq!(errs.len(), 1);
+        assert_eq!(
+            errs.first().map(|err| err.to_string()).unwrap(),
+            "line 1: expected expression"
+        );
     }
 
     #[test]

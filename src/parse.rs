@@ -8,11 +8,11 @@ pub struct Parser {
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {
     #[error("parsing failed")]
-    Failed,
+    Failed { errs: Vec<LineError> },
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum InternalError {
+pub enum LineError {
     #[error("line {line}: expected {expected} but was instead {actual}")]
     Expected {
         expected: TokenType,
@@ -30,20 +30,21 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
+        let mut errs = vec![];
         match self.expression() {
             Ok(expr) => return Ok(expr),
             Err(err) => {
-                eprintln!("{err}");
+                errs.push(err);
                 self.synchronize();
                 while !self.at_end() {
                     if let Err(err) = self.expression() {
-                        eprintln!("{err}");
+                        errs.push(err);
                         self.synchronize();
                     }
                 }
             }
         }
-        Err(ParseError::Failed)
+        Err(ParseError::Failed { errs })
     }
 
     fn synchronize(&mut self) {
@@ -70,12 +71,12 @@ impl Parser {
     }
 
     // expression -> equality ;
-    fn expression(&mut self) -> Result<Expr, InternalError> {
+    fn expression(&mut self) -> Result<Expr, LineError> {
         self.equality()
     }
 
     // equality → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn equality(&mut self) -> Result<Expr, InternalError> {
+    fn equality(&mut self) -> Result<Expr, LineError> {
         let mut expr = self.comparison()?;
         while self.match_any([TokenType::BangEqual, TokenType::EqualEqual]) {
             let op = self.previous();
@@ -86,7 +87,7 @@ impl Parser {
     }
 
     // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    fn comparison(&mut self) -> Result<Expr, InternalError> {
+    fn comparison(&mut self) -> Result<Expr, LineError> {
         let mut expr = self.term()?;
         while self.match_any([
             TokenType::Less,
@@ -102,7 +103,7 @@ impl Parser {
     }
 
     // term → factor ( ( "-" | "+" ) factor )* ;
-    fn term(&mut self) -> Result<Expr, InternalError> {
+    fn term(&mut self) -> Result<Expr, LineError> {
         let mut expr = self.factor()?;
         while self.match_any([TokenType::Minus, TokenType::Plus]) {
             let op = self.previous();
@@ -113,7 +114,7 @@ impl Parser {
     }
 
     // fractor → unary ( ( "/" | "*" ) unary )* ;
-    fn factor(&mut self) -> Result<Expr, InternalError> {
+    fn factor(&mut self) -> Result<Expr, LineError> {
         let mut expr = self.unary()?;
         while self.match_any([TokenType::Slash, TokenType::Star]) {
             let op = self.previous();
@@ -125,7 +126,7 @@ impl Parser {
 
     // unary → ( "!" | "-" ) unary
     //         | primary ;
-    fn unary(&mut self) -> Result<Expr, InternalError> {
+    fn unary(&mut self) -> Result<Expr, LineError> {
         if self.match_any([TokenType::Bang, TokenType::Minus]) {
             let op = self.previous();
             let right = self.unary()?;
@@ -136,7 +137,7 @@ impl Parser {
 
     // primary → NUMBER | STRING | "true" | "false" | "nil"
     //           | "(" expression ")" ;
-    fn primary(&mut self) -> Result<Expr, InternalError> {
+    fn primary(&mut self) -> Result<Expr, LineError> {
         if self.match_any([TokenType::False]) {
             return Ok(Expr::literal(Literal::Bool(false)));
         }
@@ -155,7 +156,7 @@ impl Parser {
             self.consume(TokenType::RightParen)?;
             return Ok(Expr::group(expr));
         }
-        Err(InternalError::ExpectedExpr {
+        Err(LineError::ExpectedExpr {
             line: self.peek().line,
         })
     }
@@ -170,11 +171,11 @@ impl Parser {
         false
     }
 
-    fn consume(&mut self, typ: TokenType) -> Result<(), InternalError> {
+    fn consume(&mut self, typ: TokenType) -> Result<(), LineError> {
         if self.match_any([typ]) {
             return Ok(());
         }
-        Err(InternalError::Expected {
+        Err(LineError::Expected {
             expected: typ,
             actual: self.peek().typ,
             line: self.peek().line,
