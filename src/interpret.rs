@@ -39,14 +39,17 @@ impl Interpreter {
 
 impl StmtVisitor for Interpreter {
     type Output = Result<(), Error>;
-    fn visit_expr_stmt(&mut self, expr: &ExprStmt) -> Self::Output {
+    fn visit_expr(&mut self, expr: &ExprStmt) -> Self::Output {
         self.evaluate(&expr.expr)?;
         Ok(())
     }
-    fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
+    fn visit_print(&mut self, expr: &PrintStmt) -> Self::Output {
         let literal = self.evaluate(&expr.expr)?;
         println!("{}", literal.to_lox());
         Ok(())
+    }
+    fn visit_var(&mut self, expr: &VarStmt) -> Self::Output {
+        todo!()
     }
 }
 
