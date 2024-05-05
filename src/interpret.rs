@@ -29,6 +29,9 @@ pub struct Interpreter {
 pub enum EnvError {
     #[error("undefined variable '{}'", token.lexeme)]
     Undefined { token: Token },
+
+    #[error("undefined variable in assign '{}'", name)]
+    UndefinedAssign { name: String },
 }
 
 #[derive(Default)]
@@ -39,6 +42,17 @@ struct Environment {
 impl Environment {
     fn define(&mut self, name: impl AsRef<str>, val: Literal) {
         self.vars.insert(name.as_ref().to_string(), val);
+    }
+
+    fn assign(&mut self, name: impl AsRef<str>, val: Literal) -> Result<(), EnvError> {
+        let name = name.as_ref();
+        if !self.vars.contains_key(name) {
+            return Err(EnvError::UndefinedAssign {
+                name: name.to_string(),
+            });
+        }
+        self.vars.insert(name.to_string(), val);
+        Ok(())
     }
 
     fn get(&self, token: &Token) -> Result<Literal, EnvError> {
@@ -95,7 +109,9 @@ impl ExprVisitor for Interpreter {
     type Output = Result<Literal, Error>;
 
     fn visit_assign(&mut self, expr: &AssignExpr) -> Self::Output {
-        todo!()
+        let val: Literal = self.evaluate(&expr.value)?;
+        self.env.assign(expr.name.lexeme.as_ref(), val.clone())?;
+        Ok(val)
     }
 
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {

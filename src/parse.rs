@@ -116,7 +116,24 @@ impl Parser {
 
     // expression -> equality ;
     fn expr(&mut self) -> Result<Expr, LineError> {
-        self.equality()
+        self.assignment()
+    }
+
+    // assignment is right-associative so we recurse to build the RHS
+    fn assignment(&mut self) -> Result<Expr, LineError> {
+        let left = self.equality()?;
+        if self.match_any([TokenType::Equal]) {
+            let equal = self.previous();
+            let value = self.assignment()?;
+            let Expr::Var(VarExpr { name }) = left else {
+                return Err(self.expected_err(TokenType::Equal));
+            };
+            return Ok(Expr::Assign(AssignExpr {
+                name,
+                value: value.into(),
+            }));
+        }
+        Ok(left)
     }
 
     // equality → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -223,11 +240,15 @@ impl Parser {
         if self.match_any([typ]) {
             return Ok(self.previous());
         }
-        Err(LineError::Expected {
+        return Err(self.expected_err(typ));
+    }
+
+    fn expected_err(&self, typ: TokenType) -> LineError {
+        LineError::Expected {
             expected: typ,
             actual: self.peek().typ,
             line: self.peek().line,
-        })
+        }
     }
 
     fn check(&self, typ: TokenType) -> bool {

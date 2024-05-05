@@ -3,3 +3,7 @@ print true;
 print 2 + 1;
 var x = 41;
 print x + 1; // prints 42
+var y = x + 42;
+print y;
+y = y + 1; // assign expr
+print y;
