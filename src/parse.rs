@@ -6,7 +6,13 @@ pub struct Parser {
 }
 
 #[derive(thiserror::Error, Debug)]
-enum ParseError {
+pub enum ParseError {
+    #[error("parsing failed")]
+    Failed,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum InternalError {
     #[error("expected {expected} but was instead {actual}")]
     Expected {
         expected: TokenType,
@@ -20,13 +26,49 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
+    pub fn parse(&mut self) -> Result<Expr, ParseError> {
+        match self.expression() {
+            Ok(expr) => return Ok(expr),
+            Err(err) => {
+                eprintln!("{err}");
+                while let Err(err) = self.expression() {
+                    eprintln!("{err}");
+                }
+            }
+        }
+        Err(ParseError::Failed)
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+        while !self.at_end() {
+            if self.previous().typ == TokenType::Semicolon {
+                return;
+            }
+            if matches!(
+                self.peek().typ,
+                TokenType::Class
+                    | TokenType::For
+                    | TokenType::Fun
+                    | TokenType::If
+                    | TokenType::Print
+                    | TokenType::Return
+                    | TokenType::Var
+                    | TokenType::While
+            ) {
+                return;
+            }
+            self.advance();
+        }
+    }
+
     // expression -> equality ;
-    fn expression(&mut self) -> Result<Expr, ParseError> {
+    fn expression(&mut self) -> Result<Expr, InternalError> {
         self.equality()
     }
 
     // equality → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn equality(&mut self) -> Result<Expr, ParseError> {
+    fn equality(&mut self) -> Result<Expr, InternalError> {
         let mut expr = self.comparison()?;
         while self.match_any([TokenType::BangEqual, TokenType::EqualEqual]) {
             let op = self.previous();
@@ -37,7 +79,7 @@ impl Parser {
     }
 
     // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    fn comparison(&mut self) -> Result<Expr, ParseError> {
+    fn comparison(&mut self) -> Result<Expr, InternalError> {
         let mut expr = self.term()?;
         while self.match_any([
             TokenType::Less,
@@ -53,7 +95,7 @@ impl Parser {
     }
 
     // term → factor ( ( "-" | "+" ) factor )* ;
-    fn term(&mut self) -> Result<Expr, ParseError> {
+    fn term(&mut self) -> Result<Expr, InternalError> {
         let mut expr = self.factor()?;
         while self.match_any([TokenType::Minus, TokenType::Plus]) {
             let op = self.previous();
@@ -64,7 +106,7 @@ impl Parser {
     }
 
     // fractor → unary ( ( "/" | "*" ) unary )* ;
-    fn factor(&mut self) -> Result<Expr, ParseError> {
+    fn factor(&mut self) -> Result<Expr, InternalError> {
         let mut expr = self.unary()?;
         while self.match_any([TokenType::Slash, TokenType::Star]) {
             let op = self.previous();
@@ -76,7 +118,7 @@ impl Parser {
 
     // unary → ( "!" | "-" ) unary
     //         | primary ;
-    fn unary(&mut self) -> Result<Expr, ParseError> {
+    fn unary(&mut self) -> Result<Expr, InternalError> {
         if self.match_any([TokenType::Bang, TokenType::Minus]) {
             let op = self.previous();
             let right = self.unary()?;
@@ -87,7 +129,7 @@ impl Parser {
 
     // primary → NUMBER | STRING | "true" | "false" | "nil"
     //           | "(" expression ")" ;
-    fn primary(&mut self) -> Result<Expr, ParseError> {
+    fn primary(&mut self) -> Result<Expr, InternalError> {
         if self.match_any([TokenType::False]) {
             return Ok(Expr::literal(Literal::Bool(false)));
         }
@@ -119,11 +161,11 @@ impl Parser {
         false
     }
 
-    fn consume(&mut self, typ: TokenType) -> Result<(), ParseError> {
+    fn consume(&mut self, typ: TokenType) -> Result<(), InternalError> {
         if self.match_any([typ]) {
             return Ok(());
         }
-        Err(ParseError::Expected {
+        Err(InternalError::Expected {
             expected: typ,
             actual: self.peek().typ,
         })
