@@ -2,10 +2,11 @@ use std::ops::Neg;
 
 use crate::prelude::*;
 
-pub struct Interpreter {}
+#[derive(Default)]
+pub struct Interpreter;
 
 impl ExprVisitor for Interpreter {
-    type Output = Value;
+    type Output = Literal;
 
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         use TokenType::*;
@@ -15,11 +16,17 @@ impl ExprVisitor for Interpreter {
             Minus => (left.num() - right.num()).into(),
             Slash => (left.num() / right.num()).into(),
             Star => (left.num() * right.num()).into(),
-            Plus => match (left.lit, right.lit) {
+            Plus => match (left, right) {
                 (Literal::Number(left), Literal::Number(right)) => (left + right).into(),
                 (Literal::String(left), Literal::String(right)) => format!("{left}{right}").into(),
                 _ => unreachable!(),
             },
+            Greater => (left.num() > right.num()).into(),
+            GreaterEqual => (left.num() >= right.num()).into(),
+            Less => (left.num() < right.num()).into(),
+            LessEqual => (left.num() <= right.num()).into(),
+            BangEqual => (left != right).into(),
+            EqualEqual => (left == right).into(),
             _ => unreachable!(),
         }
     }
@@ -42,49 +49,29 @@ impl ExprVisitor for Interpreter {
     }
 }
 
-#[derive(derive_more::From, derive_more::Display)]
-pub struct Value {
-    lit: Literal,
-}
+#[cfg(test)]
+mod tests {
+    use crate::{parse::Parser, ExprVisitor, Literal, Scanner};
 
-impl From<f64> for Value {
-    fn from(value: f64) -> Self {
-        Value {
-            lit: Literal::Number(value),
-        }
-    }
-}
+    use super::Interpreter;
 
-impl From<bool> for Value {
-    fn from(value: bool) -> Self {
-        Value {
-            lit: Literal::Bool(value),
-        }
-    }
-}
-
-impl From<String> for Value {
-    fn from(value: String) -> Self {
-        Value {
-            lit: Literal::String(value),
-        }
-    }
-}
-
-impl Value {
-    fn num(&self) -> f64 {
-        if let Literal::Number(v) = self.lit {
-            v
-        } else {
-            panic!("not a number")
-        }
-    }
-
-    fn truthy(&self) -> bool {
-        match self.lit {
-            Literal::Number(_) | Literal::String(_) => true,
-            Literal::Bool(b) => b,
-            Literal::Nil => false,
+    #[test]
+    fn test_interpret_expr() {
+        for (prog, ex) in [
+            ("3", Literal::Number(3.0)),
+            ("3 + 4", Literal::Number(7.0)),
+            ("3 * 4", Literal::Number(12.0)),
+            ("4 / 2", Literal::Number(2.0)),
+            ("(1 + 3) * 5", Literal::Number(20.0)),
+            (r#""Coll" + "in""#, Literal::String(String::from("Collin"))),
+            (r#" ! "Col""#, Literal::Bool(false)),
+            (r#" !! "Col""#, Literal::Bool(true)),
+        ] {
+            //
+            let tokens = Scanner::new(&prog).scan_tokens().unwrap();
+            let expr = Parser::new(tokens).parse().unwrap();
+            let lit = Interpreter::default().eval_expr(&expr);
+            assert_eq!(lit, ex, "expected {prog} to evaluate to {ex}");
         }
     }
 }

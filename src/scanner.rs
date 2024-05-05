@@ -21,7 +21,6 @@ pub struct LineError {
     msg: String,
 }
 
-#[derive(Default)]
 pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
@@ -40,7 +39,10 @@ impl Scanner {
             source,
             chars,
             line: 1,
-            ..Default::default()
+            current: 0,
+            tokens: Vec::default(),
+            errs: Vec::default(),
+            start: 0,
         }
     }
 
@@ -329,7 +331,7 @@ impl Display for Token {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, derive_more::From)]
 pub enum Literal {
     Number(f64),
     String(String),
@@ -337,13 +339,31 @@ pub enum Literal {
     Nil,
 }
 
+impl Literal {
+    pub fn num(&self) -> f64 {
+        if let Self::Number(val) = self {
+            *val
+        } else {
+            panic!("not a number");
+        }
+    }
+
+    pub fn truthy(&self) -> bool {
+        match self {
+            Self::Number(_) | Self::String(_) => true,
+            Self::Bool(b) => *b,
+            Self::Nil => false,
+        }
+    }
+}
+
 impl Display for Literal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Literal::Number(n) => write!(f, "{n}"),
-            Literal::String(s) => write!(f, r#""{s}""#),
-            Literal::Bool(v) => write!(f, "{v}"),
-            Literal::Nil => write!(f, "nil"),
+            Self::Number(n) => write!(f, "{n}"),
+            Self::String(s) => write!(f, r#""{s}""#),
+            Self::Bool(v) => write!(f, "{v}"),
+            Self::Nil => write!(f, "nil"),
         }
     }
 }
