@@ -36,7 +36,7 @@ impl Lox {
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
         let stmts = parser.parse().map_err(LoxError::Parse)?;
-        Interpreter::interpret(&stmts).map_err(LoxError::Interpret)?;
+        Interpreter.interpret(&stmts).map_err(LoxError::Interpret)?;
         Ok(())
     }
 }

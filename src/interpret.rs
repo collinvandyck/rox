@@ -21,8 +21,32 @@ pub enum Error {
 pub struct Interpreter;
 
 impl Interpreter {
-    pub fn interpret(stmts: &[Stmt]) -> Result<(), Error> {
-        todo!()
+    pub fn interpret(&mut self, stmts: &[Stmt]) -> Result<(), Error> {
+        for stmt in stmts {
+            self.execute(stmt)?;
+        }
+        Ok(())
+    }
+
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
+        stmt.accept(self)
+    }
+
+    fn evaluate(&mut self, expr: &Expr) -> Result<Literal, Error> {
+        expr.accept(self)
+    }
+}
+
+impl StmtVisitor for Interpreter {
+    type Output = Result<(), Error>;
+    fn visit_expr_stmt(&mut self, expr: &ExprStmt) -> Self::Output {
+        self.evaluate(&expr.expr)?;
+        Ok(())
+    }
+    fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
+        let literal = self.evaluate(&expr.expr)?;
+        println!("{}", literal.to_lox());
+        Ok(())
     }
 }
 
@@ -31,8 +55,8 @@ impl ExprVisitor for Interpreter {
 
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
         use TokenType::*;
-        let left = self.eval_expr(&expr.left)?;
-        let right = self.eval_expr(&expr.right)?;
+        let left = self.evaluate(&expr.left)?;
+        let right = self.evaluate(&expr.right)?;
         let op = &expr.op;
         Ok(match op.typ {
             Minus | Slash | Star | Greater | GreaterEqual | Less | LessEqual => {
@@ -79,7 +103,7 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
-        let right = self.eval_expr(&expr.right)?;
+        let right = self.evaluate(&expr.right)?;
         Ok(match expr.op.typ {
             TokenType::Minus => {
                 let Literal::Number(right) = &right else {
@@ -95,6 +119,6 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
-        self.eval_expr(&expr.expr)
+        self.evaluate(&expr.expr)
     }
 }
