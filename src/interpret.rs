@@ -26,15 +26,10 @@ impl ExprVisitor for Interpreter {
     fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
         let right = self.eval_expr(&expr.right);
         match expr.op.typ {
-            TokenType::Minus => {
-                return right.map_number(Neg::neg);
-            }
-            TokenType::Bang => {
-                return right.negate();
-            }
+            TokenType::Minus => (-right.number()).into(),
+            TokenType::Bang => (!right.truthy()).into(),
             v => panic!("invalid op type: {v}"),
         }
-        unreachable!()
     }
 
     fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
@@ -55,11 +50,15 @@ impl From<f64> for Value {
     }
 }
 
-impl Value {
-    fn negate(&self) -> Self {
-        Self::from(Literal::Bool(!self.truthy()))
+impl From<bool> for Value {
+    fn from(value: bool) -> Self {
+        Value {
+            lit: Literal::Bool(value),
+        }
     }
+}
 
+impl Value {
     fn number(&self) -> f64 {
         if let Literal::Number(v) = self.lit {
             v
@@ -73,13 +72,6 @@ impl Value {
             Literal::Number(_) | Literal::String(_) => true,
             Literal::Bool(b) => b,
             Literal::Nil => false,
-        }
-    }
-
-    fn map_number(&self, f: impl Fn(f64) -> f64) -> Self {
-        match self.lit {
-            Literal::Number(val) => Self::from(Literal::Number(f(val))),
-            _ => panic!("invalid value {self} for map_number"),
         }
     }
 }
