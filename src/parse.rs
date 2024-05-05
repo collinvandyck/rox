@@ -31,16 +31,18 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
         let mut errs = vec![];
-        match self.expression() {
-            Ok(expr) => return Ok(expr),
-            Err(err) => {
-                errs.push(err);
-                self.synchronize();
-                while !self.at_end() {
-                    if let Err(err) = self.expression() {
-                        errs.push(err);
-                        self.synchronize();
-                    }
+        loop {
+            if self.at_end() {
+                break;
+            }
+            match self.expr() {
+                Ok(expr) if errs.is_empty() => {
+                    return Ok(expr);
+                }
+                Ok(_expr) => {} // ignore
+                Err(err) => {
+                    errs.push(err);
+                    self.synchronize();
                 }
             }
         }
@@ -70,8 +72,23 @@ impl Parser {
         }
     }
 
+    fn stmt(&mut self) -> Result<Stmt, LineError> {
+        if self.match_any([TokenType::Print]) {
+            return self.print_stmt();
+        }
+        self.expr_stmt()
+    }
+
+    fn print_stmt(&mut self) -> Result<Stmt, LineError> {
+        todo!()
+    }
+
+    fn expr_stmt(&mut self) -> Result<Stmt, LineError> {
+        todo!()
+    }
+
     // expression -> equality ;
-    fn expression(&mut self) -> Result<Expr, LineError> {
+    fn expr(&mut self) -> Result<Expr, LineError> {
         self.equality()
     }
 
@@ -152,7 +169,7 @@ impl Parser {
             return Ok(Expr::literal(prev.literal.unwrap()));
         }
         if self.match_any([TokenType::LeftParen]) {
-            let expr = self.expression()?;
+            let expr = self.expr()?;
             self.consume(TokenType::RightParen)?;
             return Ok(Expr::group(expr));
         }
