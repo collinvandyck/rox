@@ -6,6 +6,7 @@ pub mod parse;
 pub mod prelude;
 pub mod scanner;
 pub mod stmt;
+pub mod env;
 
 use anyhow::bail;
 use itertools::Itertools;
