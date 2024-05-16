@@ -17,7 +17,7 @@ pub struct Env {
 }
 
 impl Env {
-    pub fn define(&mut self, name: impl AsRef<str>, val: impl Into<Literal>) {
+    pub fn define(&self, name: impl AsRef<str>, val: impl Into<Literal>) {
         let val = val.into();
         self.inner
             .borrow_mut()
@@ -33,6 +33,13 @@ impl Env {
                 Err(err)
             }
         })
+    }
+
+    pub fn child(&self) -> Self {
+        Self {
+            parent: Some(self.inner.clone()),
+            ..Default::default()
+        }
     }
 }
 
@@ -59,10 +66,23 @@ mod tests {
 
     #[test]
     fn test_env() {
-        let mut env = Env::default();
+        let env = Env::default();
         env.define("foo", "bar");
+        env.define("fzz", "bzz");
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
+        assert_eq!(env.get(&id("fzz")).unwrap(), "bzz".into());
+        assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
+
+        let child = env.child();
+        assert_eq!(child.get(&id("foo")).unwrap(), "bar".into());
+        assert!(child.get(&id("fuz")).unwrap_err().is_not_found());
+        child.define("foo", "baz");
+        assert_eq!(child.get(&id("foo")).unwrap(), "baz".into());
+        assert_eq!(child.get(&id("fzz")).unwrap(), "bzz".into());
+
         assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
         assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
+        assert_eq!(env.get(&id("fzz")).unwrap(), "bzz".into());
     }
 
     fn id(name: &str) -> Token {
