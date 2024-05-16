@@ -69,10 +69,7 @@ pub struct VarExpr {
 }
 
 impl Expr {
-    pub fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: ExprVisitor<Output = O>,
-    {
+    pub fn accept<Out>(&self, visitor: &mut impl ExprVisitor<Output = Out>) -> Out {
         match self {
             Expr::Binary(e) => visitor.visit_binary_expr(e),
             Expr::Literal(e) => visitor.visit_literal_expr(e),

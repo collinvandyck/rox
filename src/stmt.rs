@@ -30,10 +30,7 @@ pub struct BlockStmt {
 }
 
 impl Stmt {
-    pub fn accept<V, O>(&self, visitor: &mut V) -> O
-    where
-        V: StmtVisitor<Output = O>,
-    {
+    pub fn accept<Out>(&self, visitor: &mut impl StmtVisitor<Output = Out>) -> Out {
         match self {
             Stmt::Expr(s) => visitor.visit_expr_stmt(s),
             Stmt::Print(s) => visitor.visit_print_stmt(s),

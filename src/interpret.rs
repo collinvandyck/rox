@@ -64,8 +64,11 @@ impl StmtVisitor for Interpreter {
     }
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
         self.env.push();
+        for stmt in &expr.statements {
+            self.execute(stmt)?;
+        }
         self.env.pop()?;
-        todo!()
+        Ok(())
     }
 }
 
