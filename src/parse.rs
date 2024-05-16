@@ -112,7 +112,11 @@ impl Parser {
     }
 
     fn block_stmt(&mut self) -> Result<Stmt, LineError> {
-        todo!()
+        let mut statements = vec![];
+        while !self.check(TokenType::RightBrace) && !self.at_end() {
+            statements.push(self.stmt()?);
+        }
+        Ok(Stmt::Block(BlockStmt { statements }))
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, LineError> {
