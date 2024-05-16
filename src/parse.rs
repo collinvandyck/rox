@@ -123,11 +123,11 @@ impl Parser {
     fn assignment(&mut self) -> Result<Expr, LineError> {
         let left = self.equality()?;
         if self.match_any([TokenType::Equal]) {
-            let equal = self.previous();
-            let value = self.assignment()?;
             let Expr::Var(VarExpr { name }) = left else {
                 return Err(self.expected_err(TokenType::Equal));
             };
+            let equal = self.previous();
+            let value = self.assignment()?;
             return Ok(Expr::Assign(AssignExpr {
                 name,
                 value: value.into(),

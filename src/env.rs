@@ -17,6 +17,17 @@ pub struct Env {
 }
 
 impl Env {
+    pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Literal>) -> Result<(), EnvError> {
+        self.inner
+            .borrow_mut()
+            .vars
+            .get_mut(name.as_ref())
+            .ok_or_else(|| EnvError::UndefinedAssign {
+                name: name.as_ref().to_string(),
+            })
+            .map(|v| val.into())
+            .map(|_| ())
+    }
     pub fn define(&self, name: impl AsRef<str>, val: impl Into<Literal>) {
         let val = val.into();
         self.inner
@@ -72,6 +83,10 @@ mod tests {
         assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
         assert_eq!(env.get(&id("fzz")).unwrap(), "bzz".into());
         assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
+        assert!(env
+            .assign("foo-dne", "baz")
+            .unwrap_err()
+            .is_undefined_assign());
 
         let child = env.child();
         assert_eq!(child.get(&id("foo")).unwrap(), "bar".into());

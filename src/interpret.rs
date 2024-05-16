@@ -22,47 +22,7 @@ pub enum Error {
 
 #[derive(Default)]
 pub struct Interpreter {
-    env: Environment,
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum EnvError {
-    #[error("undefined variable '{}'", token.lexeme)]
-    Undefined { token: Token },
-
-    #[error("undefined variable in assign '{}'", name)]
-    UndefinedAssign { name: String },
-}
-
-#[derive(Default)]
-struct Environment {
-    vars: HashMap<String, Literal>,
-}
-
-impl Environment {
-    fn define(&mut self, name: impl AsRef<str>, val: Literal) {
-        self.vars.insert(name.as_ref().to_string(), val);
-    }
-
-    fn assign(&mut self, name: impl AsRef<str>, val: Literal) -> Result<(), EnvError> {
-        let name = name.as_ref();
-        if !self.vars.contains_key(name) {
-            return Err(EnvError::UndefinedAssign {
-                name: name.to_string(),
-            });
-        }
-        self.vars.insert(name.to_string(), val);
-        Ok(())
-    }
-
-    fn get(&self, token: &Token) -> Result<Literal, EnvError> {
-        self.vars
-            .get(token.lexeme.as_ref())
-            .cloned()
-            .ok_or_else(|| EnvError::Undefined {
-                token: token.clone(),
-            })
-    }
+    env: Env,
 }
 
 impl Interpreter {
@@ -84,22 +44,22 @@ impl Interpreter {
 
 impl StmtVisitor for Interpreter {
     type Output = Result<(), Error>;
-    fn visit_expr(&mut self, expr: &ExprStmt) -> Self::Output {
+    fn visit_expr_stmt(&mut self, expr: &ExprStmt) -> Self::Output {
         self.evaluate(&expr.expr)?;
         Ok(())
     }
-    fn visit_print(&mut self, expr: &PrintStmt) -> Self::Output {
+    fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
         let literal = self.evaluate(&expr.expr)?;
         println!("{}", literal.to_lox());
         Ok(())
     }
-    fn visit_var(&mut self, expr: &VarStmt) -> Self::Output {
+    fn visit_var_stmt(&mut self, expr: &VarStmt) -> Self::Output {
         let value: Literal = expr
             .initializer
             .as_ref()
             .map(|i| self.evaluate(i))
             .transpose()?
-            .unwrap_or_else(|| Literal::Nil);
+            .unwrap_or(Literal::Nil);
         self.env.define(expr.name.lexeme.as_ref(), value);
         Ok(())
     }
@@ -108,13 +68,13 @@ impl StmtVisitor for Interpreter {
 impl ExprVisitor for Interpreter {
     type Output = Result<Literal, Error>;
 
-    fn visit_assign(&mut self, expr: &AssignExpr) -> Self::Output {
+    fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output {
         let val: Literal = self.evaluate(&expr.value)?;
         self.env.assign(expr.name.lexeme.as_ref(), val.clone())?;
         Ok(val)
     }
 
-    fn visit_binary(&mut self, expr: &BinaryExpr) -> Self::Output {
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Self::Output {
         use TokenType::*;
         let left = self.evaluate(&expr.left)?;
         let right = self.evaluate(&expr.right)?;
@@ -159,15 +119,15 @@ impl ExprVisitor for Interpreter {
         })
     }
 
-    fn visit_var(&mut self, expr: &VarExpr) -> Self::Output {
+    fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output {
         Ok(self.env.get(&expr.name)?)
     }
 
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Self::Output {
+    fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Self::Output {
         Ok(expr.value.clone())
     }
 
-    fn visit_unary(&mut self, expr: &UnaryExpr) -> Self::Output {
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Self::Output {
         let right = self.evaluate(&expr.right)?;
         Ok(match expr.op.typ {
             TokenType::Minus => {
@@ -183,7 +143,7 @@ impl ExprVisitor for Interpreter {
         })
     }
 
-    fn visit_group(&mut self, expr: &GroupExpr) -> Self::Output {
+    fn visit_group_epxr(&mut self, expr: &GroupExpr) -> Self::Output {
         self.evaluate(&expr.expr)
     }
 }
