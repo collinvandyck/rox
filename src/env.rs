@@ -61,5 +61,16 @@ mod tests {
     fn test_env() {
         let mut env = Env::default();
         env.define("foo", "bar");
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
+        assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
+    }
+
+    fn id(name: &str) -> Token {
+        Token {
+            typ: TokenType::Identifier,
+            lexeme: name.into(),
+            literal: Some(name.into()),
+            line: 1,
+        }
     }
 }
