@@ -62,6 +62,9 @@ impl StmtVisitor for Interpreter {
         self.env.define(expr.name.lexeme.as_ref(), value);
         Ok(())
     }
+    fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {
