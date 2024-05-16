@@ -1,6 +1,5 @@
-use std::{cell::RefCell, collections::HashMap, ops::Neg, rc::Rc};
-
 use crate::prelude::*;
+use std::{cell::RefCell, collections::HashMap, ops::Neg, rc::Rc};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

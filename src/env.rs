@@ -45,7 +45,7 @@ impl Env {
     }
     pub fn child(&self) -> Self {
         let inner = EnvInner {
-            parent: Some(Rc::new(self.clone())),
+            parent: Some(self.clone()),
             ..Default::default()
         };
         Self {
@@ -56,7 +56,7 @@ impl Env {
 
 #[derive(Default)]
 pub struct EnvInner {
-    parent: Option<Rc<Env>>,
+    parent: Option<Env>,
     vars: HashMap<String, Literal>,
 }
 
@@ -70,7 +70,7 @@ impl EnvInner {
             return Ok(());
         }
         if let Some(parent) = &self.parent {
-            return parent.as_ref().assign(name, val);
+            return parent.assign(name, val);
         }
         Err(EnvError::undefined_assign(name))
     }
@@ -80,7 +80,7 @@ impl EnvInner {
             return Ok(f.clone());
         }
         if let Some(parent) = &self.parent {
-            return parent.as_ref().get(token);
+            return parent.get(token);
         }
         Err(EnvError::not_found(token))
     }
