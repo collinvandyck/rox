@@ -64,11 +64,14 @@ impl StmtVisitor for Interpreter {
     }
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
         self.env.push();
-        for stmt in &expr.statements {
-            self.execute(stmt)?;
-        }
+        let res = (|| {
+            for stmt in &expr.statements {
+                self.execute(stmt)?;
+            }
+            Ok(())
+        })();
         self.env.pop()?;
-        Ok(())
+        res
     }
 }
 
