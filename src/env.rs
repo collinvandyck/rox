@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(thiserror::Error, Debug, strum_macros::EnumIs)]
 pub enum EnvError {
@@ -12,21 +12,12 @@ pub enum EnvError {
 
 #[derive(Clone, Default)]
 pub struct Env {
-    parent: Option<Rc<RefCell<EnvInner>>>,
     inner: Rc<RefCell<EnvInner>>,
 }
 
 impl Env {
     pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Literal>) -> Result<(), EnvError> {
-        let mut inner = self.inner.borrow_mut();
-        let lit = inner
-            .vars
-            .get_mut(name.as_ref())
-            .ok_or_else(|| EnvError::UndefinedAssign {
-                name: name.as_ref().to_string(),
-            })?;
-        *lit = val.into();
-        Ok(())
+        self.inner.borrow_mut().assign(name, val)
     }
     pub fn define(&self, name: impl AsRef<str>, val: impl Into<Literal>) {
         let val = val.into();
@@ -37,37 +28,48 @@ impl Env {
     }
 
     pub fn get(&self, token: &Token) -> Result<Literal, EnvError> {
-        self.inner.borrow().get(token).or_else(|err| {
-            if let EnvError::NotFound { .. } = err {
-                self.parent.as_ref().ok_or(err)?.borrow().get(token)
-            } else {
-                Err(err)
-            }
-        })
+        self.inner.as_ref().borrow().get(token)
     }
 
     pub fn child(&self) -> Self {
-        Self {
-            parent: Some(self.inner.clone()),
+        let inner = EnvInner {
+            parent: Some(Rc::new(RefCell::new(self.clone()))),
             ..Default::default()
+        };
+        Self {
+            inner: Rc::new(RefCell::new(inner)),
         }
     }
 }
 
 #[derive(Default)]
 pub struct EnvInner {
+    parent: Option<Rc<RefCell<Env>>>,
     vars: HashMap<String, Literal>,
 }
 
 impl EnvInner {
-    fn get(&self, token: &Token) -> Result<Literal, EnvError> {
-        let key = &token.lexeme;
-        self.vars
-            .get(key.as_ref())
-            .cloned()
-            .ok_or_else(|| EnvError::NotFound {
-                token: token.clone(),
+    fn assign(&mut self, name: impl AsRef<str>, val: impl Into<Literal>) -> Result<(), EnvError> {
+        if let Some(v) = self.vars.get_mut(name.as_ref()) {
+            *v = val.into();
+            Ok(())
+        } else {
+            Err(EnvError::UndefinedAssign {
+                name: name.as_ref().into(),
             })
+        }
+    }
+    fn get(&self, token: &Token) -> Result<Literal, EnvError> {
+        let f: Option<&Literal> = self.vars.get(token.lexeme.as_ref());
+        if let Some(f) = f {
+            return Ok(f.clone());
+        }
+        if let Some(parent) = &self.parent {
+            return parent.as_ref().borrow().get(token);
+        }
+        Err(EnvError::NotFound {
+            token: token.clone(),
+        })
     }
 }
 
