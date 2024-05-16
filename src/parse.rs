@@ -79,7 +79,7 @@ impl Parser {
     }
 
     fn decl(&mut self) -> Result<Stmt, LineError> {
-        if self.match_any([TokenType::Var]) {
+        if self.match_any(TokenType::Var) {
             return self.var_decl();
         }
         self.stmt()
@@ -88,7 +88,7 @@ impl Parser {
     fn var_decl(&mut self) -> Result<Stmt, LineError> {
         let name = self.consume(TokenType::Identifier)?;
         let initializer = self
-            .match_any([TokenType::Equal])
+            .match_any(TokenType::Equal)
             .then(|| self.expr())
             .transpose()?;
         self.consume(TokenType::Semicolon)?;
@@ -96,8 +96,11 @@ impl Parser {
     }
 
     fn stmt(&mut self) -> Result<Stmt, LineError> {
-        if self.match_any([TokenType::Print]) {
+        if self.match_any(TokenType::Print) {
             return self.print_stmt();
+        }
+        if self.match_any(TokenType::LeftBrace) {
+            return self.block_stmt();
         }
         self.expr_stmt()
     }
@@ -106,6 +109,10 @@ impl Parser {
         let expr = self.expr()?;
         self.consume(TokenType::Semicolon)?;
         Ok(Stmt::Print(PrintStmt { expr }))
+    }
+
+    fn block_stmt(&mut self) -> Result<Stmt, LineError> {
+        todo!()
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, LineError> {
@@ -122,7 +129,7 @@ impl Parser {
     // assignment is right-associative so we recurse to build the RHS
     fn assignment(&mut self) -> Result<Expr, LineError> {
         let left = self.equality()?;
-        if self.match_any([TokenType::Equal]) {
+        if self.match_any(TokenType::Equal) {
             let Expr::Var(VarExpr { name }) = left else {
                 return Err(self.expected_err(TokenType::Equal));
             };
@@ -199,24 +206,24 @@ impl Parser {
     // primary → NUMBER | STRING | "true" | "false" | "nil"
     //           | "(" expression ")" ;
     fn primary(&mut self) -> Result<Expr, LineError> {
-        if self.match_any([TokenType::False]) {
+        if self.match_any(TokenType::False) {
             return Ok(Expr::literal(Literal::Bool(false)));
         }
-        if self.match_any([TokenType::True]) {
+        if self.match_any(TokenType::True) {
             return Ok(Expr::literal(Literal::Bool(true)));
         }
-        if self.match_any([TokenType::Nil]) {
+        if self.match_any(TokenType::Nil) {
             return Ok(Expr::literal(Literal::Nil));
         }
         if self.match_any([TokenType::Number, TokenType::String]) {
             let prev = self.previous();
             return Ok(Expr::literal(prev.literal.unwrap()));
         }
-        if self.match_any([TokenType::Identifier]) {
+        if self.match_any(TokenType::Identifier) {
             let name = self.previous();
             return Ok(Expr::Var(VarExpr { name }));
         }
-        if self.match_any([TokenType::LeftParen]) {
+        if self.match_any(TokenType::LeftParen) {
             let expr = self.expr()?;
             self.consume(TokenType::RightParen)?;
             return Ok(Expr::group(expr));
@@ -237,7 +244,7 @@ impl Parser {
     }
 
     fn consume(&mut self, typ: TokenType) -> Result<Token, LineError> {
-        if self.match_any([typ]) {
+        if self.match_any(typ) {
             return Ok(self.previous());
         }
         return Err(self.expected_err(typ));

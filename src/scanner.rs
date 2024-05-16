@@ -1,3 +1,5 @@
+use std::iter;
+
 use crate::prelude::*;
 
 #[derive(Debug)]
@@ -431,4 +433,12 @@ pub enum TokenType {
     While,
 
     Eof,
+}
+
+impl IntoIterator for TokenType {
+    type Item = TokenType;
+    type IntoIter = iter::Once<TokenType>;
+    fn into_iter(self) -> Self::IntoIter {
+        iter::once(self)
+    }
 }
