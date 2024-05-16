@@ -341,6 +341,12 @@ pub enum Literal {
     Nil,
 }
 
+impl From<&str> for Literal {
+    fn from(value: &str) -> Self {
+        Literal::String(value.to_string())
+    }
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum LiteralError {
     #[error("value was not a number")]
