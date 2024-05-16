@@ -116,6 +116,7 @@ impl Parser {
         while !self.check(TokenType::RightBrace) && !self.at_end() {
             statements.push(self.stmt()?);
         }
+        self.consume(TokenType::RightBrace)?;
         Ok(Stmt::Block(BlockStmt { statements }))
     }
 
@@ -135,7 +136,7 @@ impl Parser {
         let left = self.equality()?;
         if self.match_any(TokenType::Equal) {
             let Expr::Var(VarExpr { name }) = left else {
-                return Err(self.expected_err(TokenType::Equal));
+                return Err(self.expected_typ_error(TokenType::Equal));
             };
             let equal = self.previous();
             let value = self.assignment()?;
@@ -251,10 +252,10 @@ impl Parser {
         if self.match_any(typ) {
             return Ok(self.previous());
         }
-        return Err(self.expected_err(typ));
+        Err(self.expected_typ_error(typ))
     }
 
-    fn expected_err(&self, typ: TokenType) -> LineError {
+    fn expected_typ_error(&self, typ: TokenType) -> LineError {
         LineError::Expected {
             expected: typ,
             actual: self.peek().typ,

@@ -13,6 +13,9 @@ pub enum EnvError {
 
     #[error("undefined variable '{}'", token.lexeme)]
     NotFound { token: Token },
+
+    #[error("no parent env to restore to")]
+    NoParentEnv,
 }
 
 impl EnvError {
@@ -43,7 +46,22 @@ impl Env {
     pub fn get(&self, token: &Token) -> Result<Literal, EnvError> {
         self.inner.as_ref().borrow().get(token)
     }
-    pub fn child(&self) -> Self {
+    pub fn push(&mut self) {
+        let child = self.child();
+        *self = child;
+    }
+    pub fn pop(&mut self) -> Result<(), EnvError> {
+        let env = self
+            .inner
+            .as_ref()
+            .borrow_mut()
+            .parent
+            .take()
+            .ok_or(EnvError::NoParentEnv)?;
+        *self = env;
+        Ok(())
+    }
+    fn child(&self) -> Self {
         let inner = EnvInner {
             parent: Some(self.clone()),
             ..Default::default()
@@ -134,6 +152,20 @@ mod tests {
         assert_eq!(child.get(&id("foo")).unwrap(), "bar3".into());
 
         assert_eq!(env.get(&id("foo")).unwrap(), "bar3".into());
+    }
+
+    #[test]
+    fn test_push_pop() {
+        let mut env = Env::default();
+        env.define("foo", "bar");
+        env.assign("foo", "bar2");
+
+        env.push();
+        env.define("foo", "baz");
+        assert_eq!(env.get(&id("foo")).unwrap(), "baz".into());
+
+        env.pop();
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar2".into());
     }
 
     fn id(name: &str) -> Token {
