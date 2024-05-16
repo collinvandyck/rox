@@ -1,12 +1,12 @@
 #![allow(unused)]
 
+pub mod env;
 pub mod expr;
 pub mod interpret;
 pub mod parse;
 pub mod prelude;
 pub mod scanner;
 pub mod stmt;
-pub mod env;
 
 use anyhow::bail;
 use itertools::Itertools;
@@ -48,33 +48,6 @@ impl Lox {
 mod tests {
     use crate::{parse::Parser, Lexeme, Literal, Lox, ParseError, Scanner, Token, TokenType};
     use std::{sync::mpsc, thread, time::Duration};
-
-    #[test]
-    fn test_parser() {
-        let toks = vec![
-            Token {
-                typ: TokenType::Identifier,
-                lexeme: Lexeme::from("hi"),
-                literal: None,
-                line: 1,
-            },
-            Token {
-                typ: TokenType::Eof,
-                lexeme: Lexeme::default(),
-                literal: None,
-                line: 1,
-            },
-        ];
-        let mut parser = Parser::new(toks);
-        let Err(ParseError::Failed { errs }) = parser.parse() else {
-            panic!("should have failed");
-        };
-        assert_eq!(errs.len(), 1);
-        assert_eq!(
-            errs.first().map(|err| err.to_string()).unwrap(),
-            "line 1: expected Semicolon but was instead Eof"
-        );
-    }
 
     #[test]
     fn test_tokens() {

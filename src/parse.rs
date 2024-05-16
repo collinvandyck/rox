@@ -1,3 +1,5 @@
+use tracing::debug;
+
 use crate::prelude::*;
 
 pub struct Parser {
@@ -7,8 +9,8 @@ pub struct Parser {
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {
-    #[error("parsing failed:\n{}", errs.iter().map(|l| l.to_string()).join("\n"))]
-    Failed { errs: Vec<LineError> },
+    #[error("parsing failed")]
+    Failed,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -31,27 +33,29 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
         let mut stmts = vec![];
-        let mut errs = vec![];
+        let mut failed = false;
         loop {
             if self.at_end() {
                 break;
             }
             match self.decl() {
                 Ok(stmt) => {
-                    if errs.is_empty() {
+                    if !failed {
                         stmts.push(stmt);
                     }
                 }
+
                 Err(err) => {
-                    errs.push(err);
+                    tracing::error!("parse: {err}");
+                    failed = true;
                     self.synchronize();
                 }
             }
         }
-        if errs.is_empty() {
-            Ok(stmts)
+        if failed {
+            Err(ParseError::Failed)
         } else {
-            Err(ParseError::Failed { errs })
+            Ok(stmts)
         }
     }
 
@@ -96,6 +100,7 @@ impl Parser {
     }
 
     fn stmt(&mut self) -> Result<Stmt, LineError> {
+        debug!("stmt peek={:?}", self.peek());
         if self.match_any(TokenType::Print) {
             return self.print_stmt();
         }
@@ -106,21 +111,25 @@ impl Parser {
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, LineError> {
+        debug!("print_stmt");
         let expr = self.expr()?;
         self.consume(TokenType::Semicolon)?;
         Ok(Stmt::Print(PrintStmt { expr }))
     }
 
     fn block_stmt(&mut self) -> Result<Stmt, LineError> {
+        debug!("block_stmt");
         let mut statements = vec![];
         while !self.check(TokenType::RightBrace) && !self.at_end() {
-            statements.push(self.stmt()?);
+            let stmt = self.decl()?;
+            statements.push(stmt);
         }
         self.consume(TokenType::RightBrace)?;
         Ok(Stmt::Block(BlockStmt { statements }))
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, LineError> {
+        debug!("expr_stmt");
         let expr = self.expr()?;
         self.consume(TokenType::Semicolon)?;
         Ok(Stmt::Expr(ExprStmt { expr }))
@@ -133,6 +142,7 @@ impl Parser {
 
     // assignment is right-associative so we recurse to build the RHS
     fn assignment(&mut self) -> Result<Expr, LineError> {
+        debug!("assignment peek={:?}", self.peek());
         let left = self.equality()?;
         if self.match_any(TokenType::Equal) {
             let Expr::Var(VarExpr { name }) = left else {
@@ -211,6 +221,7 @@ impl Parser {
     // primary → NUMBER | STRING | "true" | "false" | "nil"
     //           | "(" expression ")" ;
     fn primary(&mut self) -> Result<Expr, LineError> {
+        debug!("primary peek={:?}", self.peek());
         if self.match_any(TokenType::False) {
             return Ok(Expr::literal(Literal::Bool(false)));
         }
