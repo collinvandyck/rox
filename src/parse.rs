@@ -117,6 +117,9 @@ impl Parser {
 
     fn stmt(&mut self) -> Result<Stmt, LineError> {
         debug!("stmt peek={:?}", self.peek());
+        if self.match_any(TokenType::If) {
+            return self.if_stmt();
+        }
         if self.match_any(TokenType::Print) {
             return self.print_stmt();
         }
@@ -127,7 +130,19 @@ impl Parser {
     }
 
     fn if_stmt(&mut self) -> Result<Stmt, LineError> {
-        todo!()
+        self.consume(TokenType::LeftParen)?;
+        let condition = self.expr()?;
+        self.consume(TokenType::RightParen)?;
+        let then_stmt = Box::new(self.stmt()?);
+        let mut else_stmt = None;
+        if self.match_any(TokenType::Else) {
+            else_stmt.replace(Box::new(self.stmt()?));
+        }
+        Ok(Stmt::If(IfStmt {
+            condition,
+            then_stmt,
+            else_stmt,
+        }))
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, LineError> {
