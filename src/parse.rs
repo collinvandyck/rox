@@ -123,10 +123,24 @@ impl Parser {
         if self.match_any(TokenType::Print) {
             return self.print_stmt();
         }
+        if self.match_any(TokenType::While) {
+            return self.while_stmt();
+        }
         if self.match_any(TokenType::LeftBrace) {
             return self.block_stmt();
         }
         self.expr_stmt()
+    }
+
+    fn while_stmt(&mut self) -> Result<Stmt, LineError> {
+        self.consume(TokenType::LeftParen)?;
+        let condition = self.expr()?;
+        self.consume(TokenType::RightParen)?;
+        let body = self.stmt()?;
+        Ok(Stmt::While(WhileStmt {
+            condition,
+            body: Box::new(body),
+        }))
     }
 
     fn if_stmt(&mut self) -> Result<Stmt, LineError> {

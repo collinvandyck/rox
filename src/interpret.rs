@@ -85,6 +85,12 @@ impl StmtVisitor for Interpreter {
         }
         Ok(())
     }
+    fn visit_while_stmt(&mut self, expr: &WhileStmt) -> Self::Output {
+        while (self.evaluate(&expr.condition)?.truthy()) {
+            self.execute(&expr.body)?;
+        }
+        Ok(())
+    }
 }
 
 impl ExprVisitor for Interpreter {

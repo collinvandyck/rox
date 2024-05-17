@@ -8,3 +8,6 @@ ex1:
 
 ex2:
 	cargo run -- lox/02.lox
+
+ex3:
+	cargo run -- lox/03.lox
