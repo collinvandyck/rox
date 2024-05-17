@@ -76,7 +76,14 @@ impl StmtVisitor for Interpreter {
         res
     }
     fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output {
-        todo!()
+        if self.evaluate(&expr.condition)?.truthy() {
+            self.execute(&expr.then_stmt)?;
+        } else {
+            if let Some(else_stmt) = &expr.else_stmt {
+                self.execute(else_stmt)?;
+            }
+        }
+        Ok(())
     }
 }
 
