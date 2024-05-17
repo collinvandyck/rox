@@ -1,5 +1,9 @@
 var x = 0;
 while (x < 10) {
-	print x;
+	var y = 0;
+	while (y < 2) {
+		print x;
+		y = y + 1;
+	}
 	x = x + 1;
 }

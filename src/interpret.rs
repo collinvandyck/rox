@@ -91,6 +91,9 @@ impl StmtVisitor for Interpreter {
         }
         Ok(())
     }
+    fn visit_for_stmt(&mut self, expr: &ForStmt) -> Self::Output {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {
