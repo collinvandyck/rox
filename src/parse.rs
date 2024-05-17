@@ -5,6 +5,7 @@ use crate::prelude::*;
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    errs: Vec<LineError>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -29,12 +30,19 @@ pub enum LineError {
     },
     #[error("line {line}: expected expression")]
     ExpectedExpr { line: usize },
+
+    #[error("line {}: too many args (max: 255)", token.line)]
+    TooManyArgs { token: Token },
 }
 
 impl Parser {
     pub fn new(tokens: impl IntoIterator<Item = Token>) -> Self {
         let tokens = tokens.into_iter().collect();
-        Self { tokens, current: 0 }
+        Self {
+            tokens,
+            current: 0,
+            errs: vec![],
+        }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ParseError> {
@@ -58,7 +66,7 @@ impl Parser {
                 }
             }
         }
-        if failed {
+        if failed || !self.errs.is_empty() {
             Err(ParseError::Failed)
         } else {
             Ok(stmts)
@@ -347,13 +355,21 @@ impl Parser {
 
     fn finish_call(&mut self, expr: Expr) -> Result<Expr, LineError> {
         let mut args = vec![];
+        let mut args_err = None;
         if !self.check(TokenType::RightParen) {
             loop {
                 args.push(self.expr()?);
+                if args.len() > 255 {
+                    args_err.replace(LineError::TooManyArgs { token: self.peek() });
+                }
                 if !self.match_any(TokenType::Comma) {
                     break;
                 }
             }
+        }
+        // we report the error but keep going
+        if let Some(err) = args_err {
+            self.smol_error(err);
         }
         let paren = self.consume(TokenType::RightParen)?;
         Ok(Expr::Call(CallExpr {
@@ -361,6 +377,11 @@ impl Parser {
             paren,
             args,
         }))
+    }
+
+    fn smol_error(&mut self, err: LineError) {
+        error!("{err}");
+        self.errs.push(err)
     }
 
     // primary → NUMBER | STRING | "true" | "false" | "nil"
