@@ -32,12 +32,11 @@ impl Interpreter {
         Ok(())
     }
 
+    pub fn evaluate(&mut self, expr: &Expr) -> Result<Literal, Error> {
+        expr.accept(self)
+    }
     fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
         stmt.accept(self)
-    }
-
-    fn evaluate(&mut self, expr: &Expr) -> Result<Literal, Error> {
-        expr.accept(self)
     }
 }
 

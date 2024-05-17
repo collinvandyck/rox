@@ -59,6 +59,10 @@ impl Parser {
         }
     }
 
+    pub fn parse_expr(&mut self) -> Result<Expr, LineError> {
+        self.expr()
+    }
+
     fn synchronize(&mut self) {
         self.advance();
         while !self.at_end() {

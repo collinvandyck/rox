@@ -38,10 +38,15 @@ impl Lox {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
-        let stmts = parser.parse().map_err(LoxError::Parse)?;
-        self.interpreter
-            .interpret(&stmts)
-            .map_err(LoxError::Interpret)?;
+        if let Ok(expr) = parser.parse_expr() {
+            let val = self.interpreter.evaluate(&expr)?;
+            println!("{val}");
+        } else {
+            let stmts = parser.parse().map_err(LoxError::Parse)?;
+            self.interpreter
+                .interpret(&stmts)
+                .map_err(LoxError::Interpret)?;
+        }
         Ok(())
     }
 }
