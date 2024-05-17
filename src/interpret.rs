@@ -193,4 +193,8 @@ impl ExprVisitor for Interpreter {
     fn visit_group_epxr(&mut self, expr: &GroupExpr) -> Self::Output {
         self.evaluate(&expr.expr)
     }
+
+    fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output {
+        todo!()
+    }
 }

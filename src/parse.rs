@@ -321,14 +321,46 @@ impl Parser {
     }
 
     // unary → ( "!" | "-" ) unary
-    //         | primary ;
+    //         | call;
     fn unary(&mut self) -> Result<Expr, LineError> {
         if self.match_any([TokenType::Bang, TokenType::Minus]) {
             let op = self.previous();
             let right = self.unary()?;
             return Ok(Expr::unary(op, right));
         }
-        self.primary()
+        self.call()
+    }
+
+    // call -> primary ( "(" arguments? ")" )* ;
+    // arguments -> expression ( "," expression )* ;
+    fn call(&mut self) -> Result<Expr, LineError> {
+        let mut expr = self.primary()?;
+        loop {
+            if self.match_any(TokenType::LeftParen) {
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+        Ok(expr)
+    }
+
+    fn finish_call(&mut self, expr: Expr) -> Result<Expr, LineError> {
+        let mut args = vec![];
+        if !self.check(TokenType::RightParen) {
+            loop {
+                args.push(self.expr()?);
+                if !self.match_any(TokenType::Comma) {
+                    break;
+                }
+            }
+        }
+        let paren = self.consume(TokenType::RightParen)?;
+        Ok(Expr::Call(CallExpr {
+            callee: expr.into(),
+            paren,
+            args,
+        }))
     }
 
     // primary → NUMBER | STRING | "true" | "false" | "nil"

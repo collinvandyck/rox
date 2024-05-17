@@ -9,6 +9,7 @@ pub enum Expr {
     Group(GroupExpr),
     Var(VarExpr),
     Assign(AssignExpr),
+    Call(CallExpr),
 }
 
 impl Expr {
@@ -83,6 +84,13 @@ pub struct VarExpr {
     pub name: Token,
 }
 
+#[derive(Debug)]
+pub struct CallExpr {
+    pub callee: Box<Expr>,
+    pub paren: Token,
+    pub args: Vec<Expr>,
+}
+
 impl Expr {
     pub fn accept<Out>(&self, visitor: &mut impl ExprVisitor<Output = Out>) -> Out {
         match self {
@@ -93,6 +101,7 @@ impl Expr {
             Expr::Var(e) => visitor.visit_var_expr(e),
             Expr::Assign(e) => visitor.visit_assign_expr(e),
             Expr::Logical(e) => visitor.visit_logical_expr(e),
+            Expr::Call(e) => visitor.visit_call_expr(e),
         }
     }
 }
@@ -106,4 +115,5 @@ pub trait ExprVisitor {
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output;
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output;
     fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Self::Output;
+    fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output;
 }
