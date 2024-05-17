@@ -1,6 +1,7 @@
 pub use crate::*;
 pub use env::*;
 pub use expr::*;
+pub use func::*;
 pub use interpret::*;
 pub use parse::*;
 pub use scanner::*;

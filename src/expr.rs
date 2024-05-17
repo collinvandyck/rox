@@ -1,4 +1,4 @@
-use crate::{prelude::*, Literal};
+use crate::{prelude::*, Value};
 
 #[derive(Debug)]
 pub enum Expr {
@@ -27,7 +27,7 @@ impl Expr {
             right: right.into(),
         })
     }
-    pub fn literal(literal: impl Into<Literal>) -> Self {
+    pub fn literal(literal: impl Into<Value>) -> Self {
         Self::Literal(LiteralExpr {
             value: literal.into(),
         })
@@ -65,7 +65,7 @@ pub struct BinaryExpr {
 
 #[derive(Debug)]
 pub struct LiteralExpr {
-    pub value: Literal,
+    pub value: Value,
 }
 
 #[derive(Debug)]

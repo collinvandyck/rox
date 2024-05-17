@@ -360,6 +360,7 @@ impl Parser {
             loop {
                 args.push(self.expr()?);
                 if args.len() > 255 {
+                    // we report the error but keep going
                     args_err.replace(LineError::TooManyArgs { token: self.peek() });
                 }
                 if !self.match_any(TokenType::Comma) {
@@ -389,13 +390,13 @@ impl Parser {
     fn primary(&mut self) -> Result<Expr, LineError> {
         debug!("primary peek={:?}", self.peek());
         if self.match_any(TokenType::False) {
-            return Ok(Expr::literal(Literal::Bool(false)));
+            return Ok(Expr::literal(Value::Bool(false)));
         }
         if self.match_any(TokenType::True) {
-            return Ok(Expr::literal(Literal::Bool(true)));
+            return Ok(Expr::literal(Value::Bool(true)));
         }
         if self.match_any(TokenType::Nil) {
-            return Ok(Expr::literal(Literal::Nil));
+            return Ok(Expr::literal(Value::Nil));
         }
         if self.match_any([TokenType::Number, TokenType::String]) {
             let prev = self.previous();

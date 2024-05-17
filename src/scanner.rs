@@ -240,12 +240,7 @@ impl Scanner {
         self.add_token_lexeme_literal(typ, lexeme, None);
     }
 
-    fn add_token_lexeme_literal(
-        &mut self,
-        typ: TokenType,
-        lexeme: Lexeme,
-        literal: Option<Literal>,
-    ) {
+    fn add_token_lexeme_literal(&mut self, typ: TokenType, lexeme: Lexeme, literal: Option<Value>) {
         let mut token = Token {
             typ,
             lexeme,
@@ -280,11 +275,11 @@ impl From<&str> for Lexeme {
 }
 
 impl Lexeme {
-    fn number(&self) -> Literal {
-        Literal::Number(self.0.parse::<f64>().unwrap())
+    fn number(&self) -> Value {
+        Value::Number(self.0.parse::<f64>().unwrap())
     }
-    fn string(&self) -> Literal {
-        Literal::String(self.0.clone())
+    fn string(&self) -> Value {
+        Value::String(self.0.clone())
     }
     fn identifier_type(&self) -> TokenType {
         use TokenType::*;
@@ -314,12 +309,12 @@ impl Lexeme {
 pub struct Token {
     pub typ: TokenType,
     pub lexeme: Lexeme,
-    pub literal: Option<Literal>,
+    pub literal: Option<Value>,
     pub line: usize,
 }
 
 impl Token {
-    pub fn new(typ: TokenType, lexeme: Lexeme, literal: Option<Literal>, line: usize) -> Self {
+    pub fn new(typ: TokenType, lexeme: Lexeme, literal: Option<Value>, line: usize) -> Self {
         Self {
             typ,
             lexeme,
@@ -336,46 +331,48 @@ impl Display for Token {
 }
 
 #[derive(Clone, Debug, PartialEq, derive_more::From)]
-pub enum Literal {
+pub enum Value {
     Number(f64),
     String(String),
     Bool(bool),
+    Function(Callable),
     Nil,
     Undefined,
 }
 
-impl From<&str> for Literal {
+impl From<&str> for Value {
     fn from(value: &str) -> Self {
-        Literal::String(value.to_string())
+        Value::String(value.to_string())
     }
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum LiteralError {
+pub enum ValueError {
     #[error("value was not a number")]
     NotANumber,
 }
 
-impl Literal {
+impl Value {
     pub fn to_lox(&self) -> String {
         match self {
-            Literal::Number(v) => v.to_string(),
-            Literal::String(s) => s.clone(),
-            Literal::Bool(b) => b.to_string(),
-            Literal::Nil => "nil".to_string(),
-            Literal::Undefined => "undefined".to_string(),
+            Value::Number(v) => v.to_string(),
+            Value::String(s) => s.clone(),
+            Value::Bool(b) => b.to_string(),
+            Value::Nil => "nil".to_string(),
+            Value::Undefined => "undefined".to_string(),
+            Value::Function(f) => f.to_string(),
         }
     }
     pub fn truthy(&self) -> bool {
         match self {
-            Self::Number(_) | Self::String(_) => true,
+            Self::Number(_) | Self::String(_) | Self::Function(_) => true,
             Self::Bool(b) => *b,
             Self::Nil | Self::Undefined => false,
         }
     }
 }
 
-impl Display for Literal {
+impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Number(n) => write!(f, "{n}"),
@@ -383,6 +380,7 @@ impl Display for Literal {
             Self::Bool(v) => write!(f, "{v}"),
             Self::Nil => write!(f, "nil"),
             Self::Undefined => write!(f, "undefined"),
+            Self::Function(func) => func.fmt(f),
         }
     }
 }

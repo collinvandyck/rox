@@ -37,13 +37,13 @@ pub struct Env {
 }
 
 impl Env {
-    pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Literal>) -> Result<(), EnvError> {
+    pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
         self.inner.as_ref().borrow_mut().assign(name, val)
     }
-    pub fn define(&self, name: impl AsRef<str>, val: impl Into<Literal>) {
+    pub fn define(&self, name: impl AsRef<str>, val: impl Into<Value>) {
         self.inner.as_ref().borrow_mut().define(name, val);
     }
-    pub fn get(&self, token: &Token) -> Result<Literal, EnvError> {
+    pub fn get(&self, token: &Token) -> Result<Value, EnvError> {
         self.inner.as_ref().borrow().get(token)
     }
     pub fn push(&mut self) {
@@ -75,14 +75,14 @@ impl Env {
 #[derive(Default)]
 pub struct EnvInner {
     parent: Option<Env>,
-    vars: HashMap<String, Literal>,
+    vars: HashMap<String, Value>,
 }
 
 impl EnvInner {
-    fn define(&mut self, name: impl AsRef<str>, val: impl Into<Literal>) {
+    fn define(&mut self, name: impl AsRef<str>, val: impl Into<Value>) {
         self.vars.insert(name.as_ref().to_string(), val.into());
     }
-    fn assign(&mut self, name: impl AsRef<str>, val: impl Into<Literal>) -> Result<(), EnvError> {
+    fn assign(&mut self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
         if let Some(v) = self.vars.get_mut(name.as_ref()) {
             *v = val.into();
             return Ok(());
@@ -92,8 +92,8 @@ impl EnvInner {
         }
         Err(EnvError::undefined_assign(name))
     }
-    fn get(&self, token: &Token) -> Result<Literal, EnvError> {
-        let f: Option<&Literal> = self.vars.get(token.lexeme.as_ref());
+    fn get(&self, token: &Token) -> Result<Value, EnvError> {
+        let f: Option<&Value> = self.vars.get(token.lexeme.as_ref());
         if let Some(f) = f {
             return Ok(f.clone());
         }

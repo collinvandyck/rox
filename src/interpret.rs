@@ -34,8 +34,7 @@ impl Interpreter {
         }
         Ok(())
     }
-
-    pub fn evaluate(&mut self, expr: &Expr) -> Result<Literal, Error> {
+    pub fn evaluate(&mut self, expr: &Expr) -> Result<Value, Error> {
         expr.accept(self)
     }
     fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
@@ -55,12 +54,12 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Self::Output {
-        let value: Literal = expr
+        let value: Value = expr
             .initializer
             .as_ref()
             .map(|i| self.evaluate(i))
             .transpose()?
-            .unwrap_or(Literal::Undefined);
+            .unwrap_or(Value::Undefined);
         self.env.define(expr.name.lexeme.as_ref(), value);
         Ok(())
     }
@@ -94,10 +93,10 @@ impl StmtVisitor for Interpreter {
 }
 
 impl ExprVisitor for Interpreter {
-    type Output = Result<Literal, Error>;
+    type Output = Result<Value, Error>;
 
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output {
-        let val: Literal = self.evaluate(&expr.value)?;
+        let val: Value = self.evaluate(&expr.value)?;
         self.env.assign(expr.name.lexeme.as_ref(), val.clone())?;
         Ok(val)
     }
@@ -109,7 +108,7 @@ impl ExprVisitor for Interpreter {
         let op = &expr.op;
         Ok(match op.typ {
             Minus | Slash | Star | Greater | GreaterEqual | Less | LessEqual => {
-                let (Literal::Number(left), Literal::Number(right)) = (left, right) else {
+                let (Value::Number(left), Value::Number(right)) = (left, right) else {
                     return Err(Error::NumbersRequired { op: op.clone() });
                 };
                 match op.typ {
@@ -129,8 +128,8 @@ impl ExprVisitor for Interpreter {
                 }
             }
             Plus => match (left, right) {
-                (Literal::Number(left), Literal::Number(right)) => (left + right).into(),
-                (Literal::String(left), Literal::String(right)) => format!("{left}{right}").into(),
+                (Value::Number(left), Value::Number(right)) => (left + right).into(),
+                (Value::String(left), Value::String(right)) => format!("{left}{right}").into(),
                 _ => {
                     return Err(Error::NumbersRequired {
                         op: expr.op.clone(),
@@ -162,7 +161,7 @@ impl ExprVisitor for Interpreter {
 
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output {
         let val = self.env.get(&expr.name)?;
-        if let Literal::Undefined = val {
+        if let Value::Undefined = val {
             return Err(Error::UndfinedVar {
                 token: expr.name.clone(),
             });
@@ -178,7 +177,7 @@ impl ExprVisitor for Interpreter {
         let right = self.evaluate(&expr.right)?;
         Ok(match expr.op.typ {
             TokenType::Minus => {
-                let Literal::Number(right) = &right else {
+                let Value::Number(right) = &right else {
                     return Err(Error::NumbersRequired {
                         op: expr.op.clone(),
                     });
@@ -195,6 +194,12 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output {
+        let callee = self.evaluate(&expr.callee)?;
+        let args = expr
+            .args
+            .iter()
+            .map(|arg| self.evaluate(arg))
+            .collect::<Result<Vec<_>, _>>()?;
         todo!()
     }
 }

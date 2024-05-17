@@ -2,6 +2,7 @@
 
 pub mod env;
 pub mod expr;
+pub mod func;
 pub mod interpret;
 pub mod parse;
 pub mod prelude;
@@ -54,7 +55,7 @@ impl Lox {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse::Parser, Lexeme, Literal, Lox, ParseError, Scanner, Token, TokenType};
+    use crate::{parse::Parser, Lexeme, Lox, ParseError, Scanner, Token, TokenType, Value};
     use std::{sync::mpsc, thread, time::Duration};
 
     #[test]
@@ -75,7 +76,7 @@ mod tests {
                     Token {
                         typ: TokenType::Number,
                         lexeme: Lexeme::from("3"),
-                        literal: Some(Literal::Number(3.0)),
+                        literal: Some(Value::Number(3.0)),
                         line: 1,
                     },
                     Token {
@@ -92,7 +93,7 @@ mod tests {
                     Token {
                         typ: TokenType::String,
                         lexeme: Lexeme::from("foo"),
-                        literal: Some(Literal::String("foo".into())),
+                        literal: Some(Value::String("foo".into())),
                         line: 1,
                     },
                     Token {
