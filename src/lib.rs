@@ -25,7 +25,9 @@ pub enum LoxError {
 }
 
 #[derive(Default)]
-pub struct Lox {}
+pub struct Lox {
+    interpreter: Interpreter,
+}
 
 impl Lox {
     pub fn new() -> Self {
@@ -37,7 +39,7 @@ impl Lox {
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         let mut parser = parse::Parser::new(tokens);
         let stmts = parser.parse().map_err(LoxError::Parse)?;
-        Interpreter::default()
+        self.interpreter
             .interpret(&stmts)
             .map_err(LoxError::Interpret)?;
         Ok(())
