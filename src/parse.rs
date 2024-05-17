@@ -11,6 +11,12 @@ pub struct Parser {
 pub enum ParseError {
     #[error("parsing failed")]
     Failed,
+
+    #[error("single expr required")]
+    SingleEpxr,
+
+    #[error(transparent)]
+    LineError(#[from] LineError),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -59,8 +65,14 @@ impl Parser {
         }
     }
 
-    pub fn parse_expr(&mut self) -> Result<Expr, LineError> {
-        self.expr()
+    // returns an error if the tokens have more than a single expr
+    pub fn single_expr(&mut self) -> Result<Expr, ParseError> {
+        let expr = self.expr()?;
+        if self.at_end() {
+            Ok(expr)
+        } else {
+            Err(ParseError::SingleEpxr)
+        }
     }
 
     fn synchronize(&mut self) {

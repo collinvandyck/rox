@@ -37,11 +37,12 @@ impl Lox {
     pub fn run(&mut self, prog: String) -> Result<(), LoxError> {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
-        let mut parser = parse::Parser::new(tokens);
-        if let Ok(expr) = parser.parse_expr() {
+        // Parser::parse should take a &[Token] instead.
+        if let Ok(expr) = parse::Parser::new(tokens.clone()).single_expr() {
             let val = self.interpreter.evaluate(&expr)?;
             println!("{val}");
         } else {
+            let mut parser = parse::Parser::new(tokens);
             let stmts = parser.parse().map_err(LoxError::Parse)?;
             self.interpreter
                 .interpret(&stmts)
