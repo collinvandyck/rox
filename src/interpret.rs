@@ -20,6 +20,12 @@ pub enum Error {
 
     #[error("cannot evaluate undefined var {}", token.lexeme)]
     UndfinedVar { token: Token },
+
+    #[error("line {}: can only call functions and classes", token.line)]
+    NotAFunction { token: Token },
+
+    #[error(transparent)]
+    CallableError(#[from] CallableError),
 }
 
 #[derive(Default)]
@@ -195,11 +201,16 @@ impl ExprVisitor for Interpreter {
 
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output {
         let callee = self.evaluate(&expr.callee)?;
+        let Value::Function(func) = callee else {
+            return Err(Error::NotAFunction {
+                token: expr.paren.clone(),
+            });
+        };
         let args = expr
             .args
             .iter()
             .map(|arg| self.evaluate(arg))
             .collect::<Result<Vec<_>, _>>()?;
-        todo!()
+        Ok(func.call(self)?)
     }
 }
