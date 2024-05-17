@@ -178,9 +178,9 @@ impl Parser {
     // assignment is right-associative so we recurse to build the RHS
     fn assignment(&mut self) -> Result<Expr, LineError> {
         debug!("assignment peek={:?}", self.peek());
-        let left = self.equality()?;
+        let expr = self.or()?;
         if self.match_any(TokenType::Equal) {
-            let Expr::Var(VarExpr { name }) = left else {
+            let Expr::Var(VarExpr { name }) = expr else {
                 return Err(self.expected_typ_error(TokenType::Equal));
             };
             let equal = self.previous();
@@ -190,7 +190,27 @@ impl Parser {
                 value: value.into(),
             }));
         }
-        Ok(left)
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expr, LineError> {
+        let mut expr = self.and()?;
+        while self.match_any(TokenType::Or) {
+            let op = self.previous();
+            let right = self.and()?;
+            expr = Expr::logical(expr, op, right);
+        }
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expr, LineError> {
+        let mut expr = self.equality()?;
+        while self.match_any(TokenType::And) {
+            let op = self.previous();
+            let right = self.equality()?;
+            expr = Expr::logical(expr, op, right);
+        }
+        Ok(expr)
     }
 
     // equality → comparison ( ( "!=" | "==" ) comparison )* ;

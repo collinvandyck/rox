@@ -141,6 +141,19 @@ impl ExprVisitor for Interpreter {
         })
     }
 
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Self::Output {
+        let left = self.evaluate(&expr.left)?;
+        let truthy = left.truthy();
+        if let TokenType::Or = expr.op.typ {
+            if truthy {
+                return Ok(left);
+            }
+        } else if !truthy {
+            return Ok(left);
+        }
+        return self.evaluate(&expr.right);
+    }
+
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output {
         let val = self.env.get(&expr.name)?;
         if let Literal::Undefined = val {

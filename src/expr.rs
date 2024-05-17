@@ -3,6 +3,7 @@ use crate::{prelude::*, Literal};
 #[derive(Debug)]
 pub enum Expr {
     Binary(BinaryExpr),
+    Logical(LogicalExpr),
     Literal(LiteralExpr),
     Unary(UnaryExpr),
     Group(GroupExpr),
@@ -13,6 +14,13 @@ pub enum Expr {
 impl Expr {
     pub fn binary(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
         Self::Binary(BinaryExpr {
+            left: left.into(),
+            op,
+            right: right.into(),
+        })
+    }
+    pub fn logical(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
+        Self::Logical(LogicalExpr {
             left: left.into(),
             op,
             right: right.into(),
@@ -38,6 +46,13 @@ impl Expr {
 pub struct AssignExpr {
     pub name: Token,
     pub value: Box<Expr>,
+}
+
+#[derive(Debug)]
+pub struct LogicalExpr {
+    pub left: Box<Expr>,
+    pub op: Token,
+    pub right: Box<Expr>,
 }
 
 #[derive(Debug)]
@@ -77,6 +92,7 @@ impl Expr {
             Expr::Group(e) => visitor.visit_group_epxr(e),
             Expr::Var(e) => visitor.visit_var_expr(e),
             Expr::Assign(e) => visitor.visit_assign_expr(e),
+            Expr::Logical(e) => visitor.visit_logical_expr(e),
         }
     }
 }
@@ -89,4 +105,5 @@ pub trait ExprVisitor {
     fn visit_group_epxr(&mut self, expr: &GroupExpr) -> Self::Output;
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output;
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output;
+    fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Self::Output;
 }
