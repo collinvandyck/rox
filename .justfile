@@ -11,3 +11,6 @@ ex2:
 
 ex3:
 	cargo run -- lox/03.lox
+
+ex4:
+	cargo run -- lox/04.lox

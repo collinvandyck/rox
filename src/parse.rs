@@ -126,10 +126,54 @@ impl Parser {
         if self.match_any(TokenType::While) {
             return self.while_stmt();
         }
+        if self.match_any(TokenType::For) {
+            return self.for_stmt();
+        }
         if self.match_any(TokenType::LeftBrace) {
             return self.block_stmt();
         }
         self.expr_stmt()
+    }
+
+    fn for_stmt(&mut self) -> Result<Stmt, LineError> {
+        self.consume(TokenType::LeftParen)?;
+        let init: Option<Stmt> = if self.match_any(TokenType::Semicolon) {
+            None
+        } else if self.match_any(TokenType::Var) {
+            Some(self.var_decl()?)
+        } else {
+            Some(self.expr_stmt()?)
+        };
+        let condition: Expr = if !self.check(TokenType::Semicolon) {
+            let expr = self.expr()?;
+            expr
+        } else {
+            Expr::literal(true)
+        };
+        self.consume(TokenType::Semicolon)?;
+        let incr = if !self.check(TokenType::RightParen) {
+            let incr = Some(self.expr()?);
+            incr
+        } else {
+            None
+        };
+        self.consume(TokenType::RightParen)?;
+        let mut body = self.stmt()?;
+        if let Some(incr) = incr {
+            body = Stmt::Block(BlockStmt {
+                statements: vec![body, Stmt::Expr(ExprStmt { expr: incr })],
+            });
+        }
+        body = Stmt::While(WhileStmt {
+            condition,
+            body: Box::new(body),
+        });
+        if let Some(init) = init {
+            body = Stmt::Block(BlockStmt {
+                statements: vec![init, body],
+            });
+        }
+        Ok(body)
     }
 
     fn while_stmt(&mut self) -> Result<Stmt, LineError> {
