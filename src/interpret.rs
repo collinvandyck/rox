@@ -75,6 +75,9 @@ impl StmtVisitor for Interpreter {
         self.env.pop()?;
         res
     }
+    fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {

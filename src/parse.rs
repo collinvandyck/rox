@@ -126,6 +126,10 @@ impl Parser {
         self.expr_stmt()
     }
 
+    fn if_stmt(&mut self) -> Result<Stmt, LineError> {
+        todo!()
+    }
+
     fn print_stmt(&mut self) -> Result<Stmt, LineError> {
         debug!("print_stmt");
         let expr = self.expr()?;
