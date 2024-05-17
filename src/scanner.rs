@@ -341,6 +341,7 @@ pub enum Literal {
     String(String),
     Bool(bool),
     Nil,
+    Undefined,
 }
 
 impl From<&str> for Literal {
@@ -362,13 +363,14 @@ impl Literal {
             Literal::String(s) => s.clone(),
             Literal::Bool(b) => b.to_string(),
             Literal::Nil => "nil".to_string(),
+            Literal::Undefined => "undefined".to_string(),
         }
     }
     pub fn truthy(&self) -> bool {
         match self {
             Self::Number(_) | Self::String(_) => true,
             Self::Bool(b) => *b,
-            Self::Nil => false,
+            Self::Nil | Self::Undefined => false,
         }
     }
 }
@@ -380,6 +382,7 @@ impl Display for Literal {
             Self::String(s) => write!(f, r#""{s}""#),
             Self::Bool(v) => write!(f, "{v}"),
             Self::Nil => write!(f, "nil"),
+            Self::Undefined => write!(f, "undefined"),
         }
     }
 }

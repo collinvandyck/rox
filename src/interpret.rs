@@ -17,6 +17,9 @@ pub enum Error {
 
     #[error(transparent)]
     Env(#[from] EnvError),
+
+    #[error("cannot evaluate undefined var {}", token.lexeme)]
+    UndfinedVar { token: Token },
 }
 
 #[derive(Default)]
@@ -57,7 +60,7 @@ impl StmtVisitor for Interpreter {
             .as_ref()
             .map(|i| self.evaluate(i))
             .transpose()?
-            .unwrap_or(Literal::Nil);
+            .unwrap_or(Literal::Undefined);
         self.env.define(expr.name.lexeme.as_ref(), value);
         Ok(())
     }
@@ -129,6 +132,12 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output {
+        let val = self.env.get(&expr.name)?;
+        if let Literal::Undefined = val {
+            return Err(Error::UndfinedVar {
+                token: expr.name.clone(),
+            });
+        }
         Ok(self.env.get(&expr.name)?)
     }
 
