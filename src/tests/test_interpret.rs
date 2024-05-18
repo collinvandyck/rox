@@ -9,7 +9,9 @@ use crate::prelude::*;
 
 #[test]
 fn test_interpret() {
-    let prog = r#"print "Hello";"#;
+    let prog = r#"
+        print "Hello";
+    "#;
     let run = run_prog(prog).unwrap();
     assert_eq!(run.stdout_to_string(), "Hello\n");
 }
