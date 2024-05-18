@@ -5,6 +5,9 @@ use std::{fmt::Pointer, rc::Rc, sync::Arc};
 pub enum CallableError {
     #[error("{0}")]
     Generic(Box<dyn std::error::Error>),
+
+    #[error("call: {0}")]
+    Call(Box<interpret::Error>),
 }
 
 #[derive(Clone)]
@@ -32,12 +35,8 @@ pub struct NativeCallable {
 }
 
 impl CallableTrait for NativeCallable {
-    fn call(
-        &self,
-        interpreter: &mut Interpreter,
-        args: Vec<Value>,
-    ) -> Result<Value, CallableError> {
-        self.func.as_ref()(interpreter, args)
+    fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
+        self.func.as_ref()(int, args)
     }
     fn arity(&self) -> usize {
         self.arity
@@ -45,16 +44,20 @@ impl CallableTrait for NativeCallable {
 }
 
 impl Callable {
-    pub fn call(
-        &self,
-        interpreter: &mut Interpreter,
-        args: Vec<Value>,
-    ) -> Result<Value, CallableError> {
+    pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         match self {
-            Self::Native(native) => native.call(interpreter, args),
-            Self::LoxFunction(func) => {
-                //
-                todo!()
+            Self::Native(native) => native.call(int, args),
+            Self::LoxFunction(LoxFunction { stmt }) => {
+                assert_eq!(stmt.params.len(), args.len());
+                let mut env = int.new_env();
+                for (param, arg) in stmt.params.iter().zip(args.iter()) {
+                    env.define(param.lexeme.as_ref(), arg.clone());
+                }
+                let env = int.swap_env(env);
+                let res = int.interpret(&stmt.body);
+                int.restore_env(env);
+                res.map_err(|err| CallableError::Call(err.into()))?;
+                Ok(Value::Nil)
             }
         }
     }

@@ -61,7 +61,7 @@ impl Env {
         *self = env;
         Ok(())
     }
-    fn child(&self) -> Self {
+    pub fn child(&self) -> Self {
         let inner = EnvInner {
             parent: Some(self.clone()),
             ..Default::default()

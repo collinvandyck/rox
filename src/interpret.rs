@@ -41,7 +41,7 @@ pub enum Error {
 }
 
 pub struct Interpreter {
-    globals: Env,
+    globals: Env, // we have to keep a cloned copy around so that we can make fn calls
     env: Env,
     writer: Box<dyn io::Write>,
 }
@@ -62,9 +62,10 @@ impl Default for Interpreter {
                 }),
             })),
         );
+        let env = globals.clone().child();
         Self {
             globals,
-            env: Env::default(),
+            env,
             writer: Box::new(stdout()),
         }
     }
@@ -84,6 +85,26 @@ impl Interpreter {
         self.writer = w;
         self
     }
+
+    pub fn new_env(&self) -> Env {
+        self.globals.clone().child()
+    }
+
+    pub fn swap_env(&mut self, env: Env) -> Env {
+        std::mem::replace(&mut self.env, env)
+    }
+
+    // creates a new env and returns the old one
+    pub fn take_env(&mut self) -> Env {
+        let env = self.globals.clone().child();
+        std::mem::replace(&mut self.env, env)
+    }
+
+    // replaces the env with the supplied one
+    pub fn restore_env(&mut self, env: Env) {
+        self.env = env;
+    }
+
     fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
         stmt.accept(self)
     }
