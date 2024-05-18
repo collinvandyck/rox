@@ -9,8 +9,6 @@ fun makeCounter() {
   return count;
 }
 
-print makeCounter;
 var counter = makeCounter();
-print counter;
 counter(); // "1".
 counter(); // "2".

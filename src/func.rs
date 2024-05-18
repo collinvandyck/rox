@@ -19,6 +19,7 @@ pub enum Callable {
 #[derive(Clone)]
 pub struct LoxFunction {
     pub stmt: Box<FunctionStmt>,
+    pub closure: Env,
 }
 
 #[derive(Clone)]
@@ -32,7 +33,7 @@ impl Callable {
     pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         match self {
             Self::Native(NativeCallable { func, .. }) => func(int, args),
-            Self::LoxFunction(LoxFunction { stmt }) => {
+            Self::LoxFunction(LoxFunction { stmt, closure: env }) => {
                 assert_eq!(stmt.params.len(), args.len());
                 let mut env = int.new_env();
                 for (param, arg) in stmt.params.iter().zip(args.iter()) {

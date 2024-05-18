@@ -162,6 +162,7 @@ impl StmtVisitor for Interpreter {
             stmt.name.lexeme.as_ref(),
             Value::Function(Callable::LoxFunction(LoxFunction {
                 stmt: stmt.clone().into(),
+                closure: self.env.clone(),
             })),
         );
         Ok(())
