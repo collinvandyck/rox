@@ -81,17 +81,36 @@ impl Env {
 #[derive(Default, Debug)]
 pub struct EnvInner {
     parent: Option<Env>,
-    vars: HashMap<String, Value>,
+    vars: Storage,
+}
+
+#[derive(Default, Debug)]
+enum Storage {
+    #[default]
+    None,
+    Map(HashMap<String, Value>),
 }
 
 impl EnvInner {
     fn define(&mut self, name: impl AsRef<str>, val: impl Into<Value>) {
-        self.vars.insert(name.as_ref().to_string(), val.into());
+        match &mut self.vars {
+            storage @ Storage::None => {
+                *storage = Storage::Map(HashMap::from([(name.as_ref().to_string(), val.into())]));
+            }
+            Storage::Map(vars) => {
+                vars.insert(name.as_ref().to_string(), val.into());
+            }
+        }
     }
     fn assign(&mut self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
-        if let Some(v) = self.vars.get_mut(name.as_ref()) {
-            *v = val.into();
-            return Ok(());
+        match &mut self.vars {
+            Storage::None => {}
+            Storage::Map(vars) => {
+                if let Some(v) = vars.get_mut(name.as_ref()) {
+                    *v = val.into();
+                    return Ok(());
+                }
+            }
         }
         if let Some(parent) = &self.parent {
             return parent.assign(name, val);
@@ -99,9 +118,14 @@ impl EnvInner {
         Err(EnvError::undefined_assign(name))
     }
     fn get(&self, token: &Token) -> Result<Value, EnvError> {
-        let f: Option<&Value> = self.vars.get(token.lexeme.as_ref());
-        if let Some(f) = f {
-            return Ok(f.clone());
+        match &self.vars {
+            Storage::None => {}
+            Storage::Map(vars) => {
+                let f: Option<&Value> = vars.get(token.lexeme.as_ref());
+                if let Some(f) = f {
+                    return Ok(f.clone());
+                }
+            }
         }
         if let Some(parent) = &self.parent {
             return parent.get(token);
