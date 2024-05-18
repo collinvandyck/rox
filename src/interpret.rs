@@ -160,6 +160,8 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
     fn visit_function_stmt(&mut self, expr: &FunctionStmt) -> Self::Output {
+        println!("env: {:#?}", self.env);
+        println!("fun: {expr:#?}");
         todo!()
     }
 }

@@ -1,0 +1,5 @@
+fun count(n) {
+	print "the number is " + n;
+}
+
+count(5);

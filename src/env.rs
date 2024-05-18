@@ -36,6 +36,12 @@ pub struct Env {
     inner: Rc<RefCell<EnvInner>>,
 }
 
+impl std::fmt::Debug for Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.inner.as_ref().borrow().fmt(f)
+    }
+}
+
 impl Env {
     pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
         self.inner.as_ref().borrow_mut().assign(name, val)
@@ -72,7 +78,7 @@ impl Env {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct EnvInner {
     parent: Option<Env>,
     vars: HashMap<String, Value>,
