@@ -80,12 +80,12 @@ impl Stmt {
 pub trait StmtVisitor {
     type Output;
 
-    fn visit_expr_stmt(&mut self, expr: &ExprStmt) -> Self::Output;
-    fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output;
-    fn visit_var_stmt(&mut self, expr: &VarStmt) -> Self::Output;
-    fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output;
-    fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output;
-    fn visit_while_stmt(&mut self, expr: &WhileStmt) -> Self::Output;
-    fn visit_function_stmt(&mut self, expr: &FunctionStmt) -> Self::Output;
-    fn visit_return_stmt(&mut self, expr: &ReturnStmt) -> Self::Output;
+    fn visit_expr_stmt(&mut self, stmt: &ExprStmt) -> Self::Output;
+    fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Self::Output;
+    fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Self::Output;
+    fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Self::Output;
+    fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Self::Output;
+    fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Self::Output;
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output;
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output;
 }

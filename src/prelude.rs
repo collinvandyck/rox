@@ -6,6 +6,7 @@ pub use interpret::*;
 pub use itertools::Itertools;
 pub use lox::*;
 pub use parse::*;
+pub use resolver::*;
 pub use scanner::*;
 pub use std::{
     fs,
