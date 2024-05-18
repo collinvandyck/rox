@@ -97,17 +97,12 @@ impl Interpreter {
         self.env.pop()?;
         res
     }
+
     pub fn new_env(&self) -> Env {
         self.globals.clone().child()
     }
 
     pub fn swap_env(&mut self, env: Env) -> Env {
-        std::mem::replace(&mut self.env, env)
-    }
-
-    // creates a new env and returns the old one
-    pub fn take_env(&mut self) -> Env {
-        let env = self.globals.clone().child();
         std::mem::replace(&mut self.env, env)
     }
 
