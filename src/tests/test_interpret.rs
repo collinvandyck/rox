@@ -9,17 +9,25 @@ use crate::prelude::*;
 
 #[test]
 fn test_interpret() {
-    let prog = r#"print "Hello""#;
+    let prog = r#"print "Hello";"#;
+    let run = run_prog(prog).unwrap();
+    assert_eq!(run.stdout_to_string(), "Hello\n");
 }
 
 struct Run {
     stdout: Vec<u8>,
 }
 
-fn run_prog(prog: impl AsRef<str>) -> anyhow::Result<()> {
+impl Run {
+    fn stdout_to_string(&self) -> String {
+        std::str::from_utf8(&self.stdout).unwrap().to_string()
+    }
+}
+
+fn run_prog(prog: impl AsRef<str>) -> anyhow::Result<Run> {
     let mut buf = Buffer::default();
     Lox::default().stdout(buf.clone()).run(&prog)?;
-    Ok(())
+    Ok(Run { stdout: buf.take() })
 }
 
 #[derive(Clone, Default)]
