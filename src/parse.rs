@@ -151,15 +151,13 @@ impl Parser {
             Some(self.expr_stmt()?)
         };
         let condition: Expr = if !self.check(TokenType::Semicolon) {
-            let expr = self.expr()?;
-            expr
+            self.expr()?
         } else {
             Expr::literal(true)
         };
         self.consume(TokenType::Semicolon)?;
         let incr = if !self.check(TokenType::RightParen) {
-            let incr = Some(self.expr()?);
-            incr
+            Some(self.expr()?)
         } else {
             None
         };

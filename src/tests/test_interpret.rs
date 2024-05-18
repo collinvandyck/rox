@@ -10,10 +10,10 @@ use crate::prelude::*;
 #[test]
 fn test_interpret() {
     let prog = r#"
-        print "Hello";
+        print "Hello, World!";
     "#;
     let run = run_prog(prog).unwrap();
-    assert_eq!(run.stdout_to_string(), "Hello\n");
+    assert_eq!(run.lines(), vec!["Hello, World!"]);
 }
 
 struct Run {
@@ -23,6 +23,12 @@ struct Run {
 impl Run {
     fn stdout_to_string(&self) -> String {
         std::str::from_utf8(&self.stdout).unwrap().to_string()
+    }
+    fn lines(&self) -> Vec<String> {
+        self.stdout_to_string()
+            .lines()
+            .map(ToString::to_string)
+            .collect()
     }
 }
 

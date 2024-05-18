@@ -76,7 +76,7 @@ impl StmtVisitor for Interpreter {
     }
     fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
         let literal = self.evaluate(&expr.expr)?;
-        write!(self.writer(), "{}\n", literal.to_lox()).map_err(Error::Print)?;
+        writeln!(self.writer(), "{}", literal.to_lox()).map_err(Error::Print)?;
         Ok(())
     }
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Self::Output {
@@ -103,10 +103,8 @@ impl StmtVisitor for Interpreter {
     fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output {
         if self.evaluate(&expr.condition)?.truthy() {
             self.execute(&expr.then_stmt)?;
-        } else {
-            if let Some(else_stmt) = &expr.else_stmt {
-                self.execute(else_stmt)?;
-            }
+        } else if let Some(else_stmt) = &expr.else_stmt {
+            self.execute(else_stmt)?;
         }
         Ok(())
     }
@@ -182,7 +180,7 @@ impl ExprVisitor for Interpreter {
         } else if !truthy {
             return Ok(left);
         }
-        return self.evaluate(&expr.right);
+        self.evaluate(&expr.right)
     }
 
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output {
