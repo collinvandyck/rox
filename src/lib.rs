@@ -14,7 +14,7 @@ mod tests;
 use anyhow::bail;
 use itertools::Itertools;
 use prelude::*;
-use std::fmt::Display;
+use std::{fmt::Display, io};
 use tracing_subscriber::field::display;
 
 #[derive(thiserror::Error, Debug)]
@@ -30,6 +30,7 @@ pub enum LoxError {
 #[derive(Default)]
 pub struct Lox {
     interpreter: Interpreter,
+    stdout: Option<Box<dyn io::Write>>,
 }
 
 impl Lox {
@@ -37,7 +38,7 @@ impl Lox {
         Self::default()
     }
 
-    pub fn run(&mut self, prog: String) -> Result<(), LoxError> {
+    pub fn run(&mut self, prog: impl AsRef<str>) -> Result<(), LoxError> {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         // Parser::parse should take a &[Token] instead.
@@ -52,5 +53,10 @@ impl Lox {
                 .map_err(LoxError::Interpret)?;
         }
         Ok(())
+    }
+
+    pub fn stdout(mut self, w: Box<dyn io::Write>) -> Self {
+        self.stdout.replace(w);
+        self
     }
 }

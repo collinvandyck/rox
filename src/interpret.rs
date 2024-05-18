@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::{cell::RefCell, collections::HashMap, ops::Neg, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, io::stdout, ops::Neg, rc::Rc};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -26,11 +26,23 @@ pub enum Error {
 
     #[error(transparent)]
     CallableError(#[from] CallableError),
+
+    #[error("could not print: {0}")]
+    Print(#[source] io::Error),
 }
 
-#[derive(Default)]
 pub struct Interpreter {
     env: Env,
+    writer: Box<dyn io::Write>,
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self {
+            writer: Box::new(stdout()),
+            env: Env::default(),
+        }
+    }
 }
 
 impl Interpreter {
@@ -46,6 +58,10 @@ impl Interpreter {
     fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
         stmt.accept(self)
     }
+
+    fn writer(&mut self) -> &mut dyn io::Write {
+        self.writer.as_mut()
+    }
 }
 
 impl StmtVisitor for Interpreter {
@@ -56,7 +72,7 @@ impl StmtVisitor for Interpreter {
     }
     fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
         let literal = self.evaluate(&expr.expr)?;
-        println!("{}", literal.to_lox());
+        write!(self.writer(), "{}\n", literal.to_lox()).map_err(Error::Print)?;
         Ok(())
     }
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Self::Output {
