@@ -85,7 +85,7 @@ impl std::fmt::Display for Callable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Native(native) => write!(f, "<native fn {}>", native.name),
-            Self::LoxFunction(func) => write!(f, "<fn {}>", func.stmt.name),
+            Self::LoxFunction(func) => write!(f, "<fn {}>", func.stmt.name.lexeme),
         }
     }
 }

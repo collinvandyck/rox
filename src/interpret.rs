@@ -44,15 +44,14 @@ pub enum Error {
 }
 
 pub struct Interpreter {
-    globals: Env, // we have to keep a cloned copy around so that we can make fn calls
     env: Env,
     writer: Box<dyn io::Write>,
 }
 
 impl Default for Interpreter {
     fn default() -> Self {
-        let mut globals = Env::default();
-        globals.define(
+        let mut env = Env::default();
+        env.define(
             "clock",
             Value::Function(Callable::Native(NativeCallable {
                 name: "clock".to_string(),
@@ -65,9 +64,7 @@ impl Default for Interpreter {
                 }),
             })),
         );
-        let env = globals.clone().child();
         Self {
-            globals,
             env,
             writer: Box::new(stdout()),
         }
@@ -102,7 +99,7 @@ impl Interpreter {
     }
 
     pub fn new_env(&self) -> Env {
-        self.env.clone().child()
+        self.env.child()
     }
 
     pub fn swap_env(&mut self, env: Env) -> Env {
