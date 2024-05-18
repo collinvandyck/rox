@@ -1,10 +1,9 @@
-use std::iter;
-
 use crate::prelude::*;
+use std::iter;
 
 #[derive(Debug)]
 pub struct ScanError {
-    errs: Vec<LineError>,
+    errs: Vec<ScanLineError>,
 }
 
 impl std::error::Error for ScanError {}
@@ -18,7 +17,7 @@ impl std::fmt::Display for ScanError {
 
 #[derive(thiserror::Error, Debug)]
 #[error("line: {line}: {msg}")]
-pub struct LineError {
+pub struct ScanLineError {
     line: usize,
     msg: String,
 }
@@ -30,7 +29,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
-    errs: Vec<LineError>,
+    errs: Vec<ScanLineError>,
 }
 
 impl Scanner {
@@ -218,7 +217,7 @@ impl Scanner {
     }
 
     fn error(&mut self, msg: &str) {
-        let err = LineError {
+        let err = ScanLineError {
             line: self.line,
             msg: msg.to_string(),
         };
@@ -324,7 +323,7 @@ impl Token {
     }
 }
 
-impl Display for Token {
+impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[{} {} {}]", self.typ, self.lexeme, self.line)
     }
@@ -372,7 +371,7 @@ impl Value {
     }
 }
 
-impl Display for Value {
+impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Number(n) => write!(f, "{n}"),

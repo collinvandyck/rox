@@ -1,4 +1,4 @@
-use crate::Lox;
+use crate::prelude::*;
 
 #[test]
 fn test_interpret() {

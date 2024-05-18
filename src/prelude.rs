@@ -3,6 +3,8 @@ pub use env::*;
 pub use expr::*;
 pub use func::*;
 pub use interpret::*;
+pub use itertools::Itertools;
+pub use lox::*;
 pub use parse::*;
 pub use scanner::*;
 pub use std::{
@@ -11,4 +13,4 @@ pub use std::{
     path::{Path, PathBuf},
 };
 pub use stmt::*;
-pub use tracing::{error, info, warn};
+pub use tracing::{debug, error, info, warn};
