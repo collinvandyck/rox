@@ -12,9 +12,11 @@ pub enum Callable {
     Native {
         name: String,
         arity: usize,
-        func: Rc<dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>>,
+        func: Rc<CallableFn>,
     },
 }
+
+type CallableFn = dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>;
 
 impl Callable {
     pub fn call(

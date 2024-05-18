@@ -138,6 +138,9 @@ impl StmtVisitor for Interpreter {
         }
         Ok(())
     }
+    fn visit_function_stmt(&mut self, expr: &FunctionStmt) -> Self::Output {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {
