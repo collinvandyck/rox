@@ -102,7 +102,7 @@ impl Interpreter {
     }
 
     pub fn new_env(&self) -> Env {
-        self.globals.clone().child()
+        self.env.clone().child()
     }
 
     pub fn swap_env(&mut self, env: Env) -> Env {
@@ -206,7 +206,7 @@ impl ExprVisitor for Interpreter {
                     Greater => (left > right).into(),
                     GreaterEqual => (left >= right).into(),
                     Less => (left < right).into(),
-                    LessEqual => (left < right).into(),
+                    LessEqual => (left <= right).into(),
                     _ => unreachable!(),
                 }
             }

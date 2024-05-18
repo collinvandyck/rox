@@ -1,0 +1,7 @@
+var y = 1;
+
+fun foo(x) {
+	return 42 + y;
+}
+
+print foo(2);
