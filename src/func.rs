@@ -16,4 +16,8 @@ impl Callable {
     pub fn call(&self, interpreter: &mut Interpreter) -> Result<Value, CallableError> {
         todo!()
     }
+
+    pub fn arity(&self) -> usize {
+        todo!()
+    }
 }

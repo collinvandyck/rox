@@ -25,6 +25,13 @@ pub enum Error {
     #[error("line {}: can only call functions and classes", token.line)]
     NotAFunction { token: Token },
 
+    #[error("line {}: expected {expected} args but got {actual}", token.line)]
+    FunctionArity {
+        token: Token,
+        expected: usize,
+        actual: usize,
+    },
+
     #[error(transparent)]
     CallableError(#[from] CallableError),
 
@@ -229,6 +236,14 @@ impl ExprVisitor for Interpreter {
             .iter()
             .map(|arg| self.evaluate(arg))
             .collect::<Result<Vec<_>, _>>()?;
+        let arity = func.arity();
+        if args.len() != arity {
+            return Err(Error::FunctionArity {
+                token: expr.paren.clone(),
+                expected: arity,
+                actual: args.len(),
+            });
+        }
         Ok(func.call(self)?)
     }
 }
