@@ -1,5 +1,12 @@
 use crate::prelude::*;
 
+macro_rules! stmt {
+    ($($l:tt)+) => {
+        #[derive(Clone, Debug, PartialEq)]
+        $($l)*
+    };
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Stmt {
     Expr(ExprStmt),
@@ -9,48 +16,50 @@ pub enum Stmt {
     If(IfStmt),
     While(WhileStmt),
     Function(FunctionStmt),
+    Return(ReturnStmt),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+stmt! {
 pub struct ExprStmt {
     pub expr: Expr,
-}
+}}
 
-#[derive(Clone, Debug, PartialEq)]
+stmt! {
 pub struct PrintStmt {
     pub expr: Expr,
-}
+}}
 
-#[derive(Clone, Debug, PartialEq)]
+stmt! {
 pub struct VarStmt {
     pub name: Token,
     pub initializer: Option<Expr>,
-}
+}}
 
-#[derive(Clone, Debug, PartialEq)]
+stmt! {
 pub struct BlockStmt {
     pub statements: Vec<Stmt>,
-}
+}}
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct IfStmt {
+stmt! {pub struct IfStmt {
     pub condition: Expr,
     pub then_stmt: Box<Stmt>,
     pub else_stmt: Option<Box<Stmt>>,
-}
+}}
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct WhileStmt {
+stmt! {pub struct WhileStmt {
     pub condition: Expr,
     pub body: Box<Stmt>,
-}
+}}
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct FunctionStmt {
+stmt! {pub struct FunctionStmt {
     pub name: Token,
     pub params: Vec<Token>,
     pub body: Vec<Stmt>,
-}
+}}
+
+stmt! {pub struct ReturnStmt {
+    pub value: Token,
+}}
 
 impl Stmt {
     pub fn accept<Out>(&self, visitor: &mut impl StmtVisitor<Output = Out>) -> Out {
@@ -62,6 +71,7 @@ impl Stmt {
             Stmt::If(s) => visitor.visit_if_stmt(s),
             Stmt::While(s) => visitor.visit_while_stmt(s),
             Stmt::Function(s) => visitor.visit_function_stmt(s),
+            Stmt::Return(s) => visitor.visit_return_stmt(s),
         }
     }
 }
@@ -76,4 +86,5 @@ pub trait StmtVisitor {
     fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output;
     fn visit_while_stmt(&mut self, expr: &WhileStmt) -> Self::Output;
     fn visit_function_stmt(&mut self, expr: &FunctionStmt) -> Self::Output;
+    fn visit_return_stmt(&mut self, expr: &ReturnStmt) -> Self::Output;
 }
