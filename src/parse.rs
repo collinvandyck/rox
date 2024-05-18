@@ -31,6 +31,29 @@ pub enum LineError {
 
     #[error("line {}: too many args (max: 255)", token.line)]
     TooManyArgs { token: Token },
+
+    #[error("line {}: too many params (max: 255)", token.line)]
+    TooManyParams { token: Token },
+
+    #[error("({kind}): {err}")]
+    FunctionKind {
+        kind: FunctionKind,
+        err: Box<LineError>,
+    },
+}
+
+impl LineError {
+    fn fn_kind(kind: FunctionKind, err: Self) -> Self {
+        Self::FunctionKind {
+            kind,
+            err: err.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, strum_macros::Display)]
+pub enum FunctionKind {
+    Function,
 }
 
 impl Parser {
@@ -105,10 +128,34 @@ impl Parser {
     }
 
     fn decl(&mut self) -> Result<Stmt, LineError> {
+        if self.match_any(TokenType::Fun) {
+            return self.function(FunctionKind::Function);
+        }
         if self.match_any(TokenType::Var) {
             return self.var_decl();
         }
         self.stmt()
+    }
+
+    fn function(&mut self, kind: FunctionKind) -> Result<Stmt, LineError> {
+        let name = self.consume_for_fn(kind, TokenType::Identifier)?;
+        self.consume_for_fn(kind, TokenType::LeftParen)?;
+        let mut params = vec![];
+        if !self.check(TokenType::RightParen) {
+            loop {
+                params.push(self.consume(TokenType::Identifier)?);
+                if !self.match_any(TokenType::Comma) {
+                    break;
+                }
+            }
+        }
+        if params.len() >= 255 {
+            self.smol_error(LineError::TooManyParams { token: self.peek() });
+        }
+        self.consume_for_fn(kind, TokenType::RightParen)?;
+        self.consume(TokenType::LeftBrace)?;
+        let body = self.block()?;
+        Ok(Stmt::Function(FunctionStmt { name, params, body }))
     }
 
     fn var_decl(&mut self) -> Result<Stmt, LineError> {
@@ -214,14 +261,19 @@ impl Parser {
         Ok(Stmt::Print(PrintStmt { expr }))
     }
 
-    fn block_stmt(&mut self) -> Result<Stmt, LineError> {
-        debug!("block_stmt");
+    fn block(&mut self) -> Result<Vec<Stmt>, LineError> {
         let mut statements = vec![];
         while !self.check(TokenType::RightBrace) && !self.at_end() {
             let stmt = self.decl()?;
             statements.push(stmt);
         }
         self.consume(TokenType::RightBrace)?;
+        Ok(statements)
+    }
+
+    fn block_stmt(&mut self) -> Result<Stmt, LineError> {
+        debug!("block_stmt");
+        let statements = self.block()?;
         Ok(Stmt::Block(BlockStmt { statements }))
     }
 
@@ -355,7 +407,7 @@ impl Parser {
         if !self.check(TokenType::RightParen) {
             loop {
                 args.push(self.expr()?);
-                if args.len() > 255 {
+                if args.len() >= 255 {
                     // we report the error but keep going
                     args_err.replace(LineError::TooManyArgs { token: self.peek() });
                 }
@@ -420,6 +472,14 @@ impl Parser {
             }
         }
         false
+    }
+
+    fn consume_for_fn(&mut self, kind: FunctionKind, typ: TokenType) -> Result<Token, LineError> {
+        if self.match_any(typ) {
+            return Ok(self.previous());
+        }
+        let err = self.expected_typ_error(typ);
+        Err(LineError::fn_kind(kind, err))
     }
 
     fn consume(&mut self, typ: TokenType) -> Result<Token, LineError> {
