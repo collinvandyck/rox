@@ -32,7 +32,7 @@ impl Run {
     }
 }
 
-fn run_prog(prog: impl AsRef<str>) -> anyhow::Result<Run> {
+fn run_prog(prog: impl AsRef<str>) -> Result<Run, Box<dyn std::error::Error>> {
     let mut buf = Buffer::default();
     Lox::default().stdout(buf.clone()).run(&prog)?;
     Ok(Run { stdout: buf.take() })

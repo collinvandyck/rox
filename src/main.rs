@@ -24,7 +24,7 @@ fn run_file(script: &Path) -> Result<()> {
     let mut lox = Lox::new();
     let bs = fs::read(script)?;
     let prog = String::from_utf8(bs).context("script to utf8")?;
-    lox.run(prog)?;
+    lox.run(prog).map_err(|err| anyhow::anyhow!("lox: {err}"))?;
     Ok(())
 }
 

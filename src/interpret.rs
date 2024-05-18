@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use std::io;
+use std::time::Instant;
 use std::{cell::RefCell, collections::HashMap, io::stdout, ops::Neg, rc::Rc};
 
 #[derive(thiserror::Error, Debug)]
@@ -40,15 +41,31 @@ pub enum Error {
 }
 
 pub struct Interpreter {
+    globals: Env,
     env: Env,
     writer: Box<dyn io::Write>,
 }
 
 impl Default for Interpreter {
     fn default() -> Self {
+        let mut globals = Env::default();
+        globals.define(
+            "clock",
+            Value::Function(Callable::Native {
+                name: "clock".to_string(),
+                arity: 0,
+                func: Rc::new(|interpreter: &mut Interpreter, args: Vec<Value>| {
+                    let now = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map_err(|err| CallableError::Generic(err.into()))?;
+                    Ok(Value::Number(now.as_secs_f64()))
+                }),
+            }),
+        );
         Self {
-            writer: Box::new(stdout()),
+            globals,
             env: Env::default(),
+            writer: Box::new(stdout()),
         }
     }
 }
@@ -244,6 +261,6 @@ impl ExprVisitor for Interpreter {
                 actual: args.len(),
             });
         }
-        Ok(func.call(self)?)
+        Ok(func.call(self, args)?)
     }
 }
