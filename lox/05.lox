@@ -1,5 +1,6 @@
 fun count(n) {
-	print "the number is " + n;
+  if (n > 1) count(n - 1);
+  print n;
 }
 
-count(5);
+count(10);

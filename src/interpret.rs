@@ -99,7 +99,7 @@ impl Interpreter {
     }
 
     pub fn new_env(&self) -> Env {
-        self.globals.clone().child()
+        self.env.clone().child()
     }
 
     pub fn swap_env(&mut self, env: Env) -> Env {
@@ -157,10 +157,14 @@ impl StmtVisitor for Interpreter {
         }
         Ok(())
     }
-    fn visit_function_stmt(&mut self, expr: &FunctionStmt) -> Self::Output {
-        println!("env: {:#?}", self.env);
-        println!("fun: {expr:#?}");
-        todo!()
+    fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output {
+        self.env.define(
+            stmt.name.lexeme.as_ref(),
+            Value::Function(Callable::LoxFunction(LoxFunction {
+                stmt: stmt.clone().into(),
+            })),
+        );
+        Ok(())
     }
 }
 
