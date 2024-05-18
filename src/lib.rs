@@ -30,7 +30,6 @@ pub enum LoxError {
 #[derive(Default)]
 pub struct Lox {
     interpreter: Interpreter,
-    stdout: Option<Box<dyn io::Write>>,
 }
 
 impl Lox {
@@ -56,7 +55,7 @@ impl Lox {
     }
 
     pub fn stdout(mut self, w: Box<dyn io::Write>) -> Self {
-        self.stdout.replace(w);
+        self.interpreter = self.interpreter.with_writer(w);
         self
     }
 }

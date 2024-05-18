@@ -55,10 +55,13 @@ impl Interpreter {
     pub fn evaluate(&mut self, expr: &Expr) -> Result<Value, Error> {
         expr.accept(self)
     }
+    pub fn with_writer(mut self, w: Box<dyn io::Write>) -> Self {
+        self.writer = w;
+        self
+    }
     fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
         stmt.accept(self)
     }
-
     fn writer(&mut self) -> &mut dyn io::Write {
         self.writer.as_mut()
     }
