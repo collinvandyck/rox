@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Binary(BinaryExpr),
     Logical(LogicalExpr),
@@ -43,48 +43,48 @@ impl Expr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct AssignExpr {
     pub name: Token,
     pub value: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LogicalExpr {
     pub left: Box<Expr>,
     pub op: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BinaryExpr {
     pub left: Box<Expr>,
     pub op: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LiteralExpr {
     pub value: Value,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UnaryExpr {
     pub op: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GroupExpr {
     pub expr: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VarExpr {
     pub name: Token,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CallExpr {
     pub callee: Box<Expr>,
     pub paren: Token,
@@ -97,7 +97,7 @@ impl Expr {
             Expr::Binary(e) => visitor.visit_binary_expr(e),
             Expr::Literal(e) => visitor.visit_literal_expr(e),
             Expr::Unary(e) => visitor.visit_unary_expr(e),
-            Expr::Group(e) => visitor.visit_group_epxr(e),
+            Expr::Group(e) => visitor.visit_group_expr(e),
             Expr::Var(e) => visitor.visit_var_expr(e),
             Expr::Assign(e) => visitor.visit_assign_expr(e),
             Expr::Logical(e) => visitor.visit_logical_expr(e),
@@ -111,7 +111,7 @@ pub trait ExprVisitor {
     fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Self::Output;
     fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Self::Output;
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Self::Output;
-    fn visit_group_epxr(&mut self, expr: &GroupExpr) -> Self::Output;
+    fn visit_group_expr(&mut self, expr: &GroupExpr) -> Self::Output;
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output;
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output;
     fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Self::Output;

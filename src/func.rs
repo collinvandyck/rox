@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::{rc::Rc, sync::Arc};
+use std::{fmt::Pointer, rc::Rc, sync::Arc};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CallableError {
@@ -9,14 +9,40 @@ pub enum CallableError {
 
 #[derive(Clone)]
 pub enum Callable {
-    Native {
-        name: String,
-        arity: usize,
-        func: Rc<CallableFn>,
-    },
+    Native(NativeCallable),
+    LoxFunction(LoxFunction),
 }
 
-type CallableFn = dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>;
+trait CallableTrait {
+    fn call(&self, interpreter: &mut Interpreter, args: Vec<Value>)
+        -> Result<Value, CallableError>;
+    fn arity(&self) -> usize;
+}
+
+#[derive(Clone)]
+pub struct LoxFunction {
+    pub stmt: Box<FunctionStmt>,
+}
+
+#[derive(Clone)]
+pub struct NativeCallable {
+    pub name: String,
+    pub arity: usize,
+    pub func: Rc<dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>>,
+}
+
+impl CallableTrait for NativeCallable {
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        args: Vec<Value>,
+    ) -> Result<Value, CallableError> {
+        self.func.as_ref()(interpreter, args)
+    }
+    fn arity(&self) -> usize {
+        self.arity
+    }
+}
 
 impl Callable {
     pub fn call(
@@ -25,20 +51,28 @@ impl Callable {
         args: Vec<Value>,
     ) -> Result<Value, CallableError> {
         match self {
-            Self::Native { arity, func, .. } => func.as_ref()(interpreter, args),
+            Self::Native(native) => native.call(interpreter, args),
+            Self::LoxFunction(func) => {
+                //
+                todo!()
+            }
         }
     }
 
     pub fn arity(&self) -> usize {
         match self {
-            Self::Native { arity, .. } => *arity,
+            Self::Native(func) => func.arity(),
+            Self::LoxFunction(func) => func.stmt.params.len(),
         }
     }
 }
+
 impl PartialEq for Callable {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Callable::Native { name: n1, .. }, Callable::Native { name: n2, .. }) => n1 == n2,
+            (Callable::Native(n1), Callable::Native(n2)) => n1.name == n2.name,
+            (Callable::LoxFunction(n1), Callable::LoxFunction(n2)) => n1.stmt == n2.stmt,
+            _ => false,
         }
     }
 }
@@ -46,11 +80,12 @@ impl PartialEq for Callable {
 impl std::fmt::Debug for Callable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Native { name, arity, .. } => f
+            Self::Native(NativeCallable { name, arity, .. }) => f
                 .debug_struct("Native")
                 .field("name", name)
                 .field("arity", arity)
                 .finish(),
+            Self::LoxFunction(func) => func.fmt(f),
         }
     }
 }
@@ -58,7 +93,8 @@ impl std::fmt::Debug for Callable {
 impl std::fmt::Display for Callable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Native { name, .. } => write!(f, "<native fn {name}>"),
+            Self::Native(native) => write!(f, "<native fn {}>", native.name),
+            Self::LoxFunction(func) => write!(f, "<lox fn {}>", func.stmt.name),
         }
     }
 }

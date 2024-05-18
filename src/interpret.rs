@@ -51,7 +51,7 @@ impl Default for Interpreter {
         let mut globals = Env::default();
         globals.define(
             "clock",
-            Value::Function(Callable::Native {
+            Value::Function(Callable::Native(NativeCallable {
                 name: "clock".to_string(),
                 arity: 0,
                 func: Rc::new(|interpreter: &mut Interpreter, args: Vec<Value>| {
@@ -60,7 +60,7 @@ impl Default for Interpreter {
                         .map_err(|err| CallableError::Generic(err.into()))?;
                     Ok(Value::Number(now.as_secs_f64()))
                 }),
-            }),
+            })),
         );
         Self {
             globals,
@@ -240,7 +240,7 @@ impl ExprVisitor for Interpreter {
         })
     }
 
-    fn visit_group_epxr(&mut self, expr: &GroupExpr) -> Self::Output {
+    fn visit_group_expr(&mut self, expr: &GroupExpr) -> Self::Output {
         self.evaluate(&expr.expr)
     }
 

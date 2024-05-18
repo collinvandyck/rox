@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Stmt {
     Expr(ExprStmt),
     Print(PrintStmt),
@@ -11,41 +11,41 @@ pub enum Stmt {
     Function(FunctionStmt),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExprStmt {
     pub expr: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PrintStmt {
     pub expr: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VarStmt {
     pub name: Token,
     pub initializer: Option<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BlockStmt {
     pub statements: Vec<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IfStmt {
     pub condition: Expr,
     pub then_stmt: Box<Stmt>,
     pub else_stmt: Option<Box<Stmt>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WhileStmt {
     pub condition: Expr,
     pub body: Box<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FunctionStmt {
     pub name: Token,
     pub params: Vec<Token>,
