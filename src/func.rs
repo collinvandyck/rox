@@ -33,9 +33,9 @@ impl Callable {
     pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         match self {
             Self::Native(NativeCallable { func, .. }) => func(int, args),
-            Self::LoxFunction(LoxFunction { stmt, closure: env }) => {
+            Self::LoxFunction(LoxFunction { stmt, closure }) => {
                 assert_eq!(stmt.params.len(), args.len());
-                let mut env = int.new_env();
+                let mut env = closure.child();
                 for (param, arg) in stmt.params.iter().zip(args.iter()) {
                     env.define(param.lexeme.as_ref(), arg.clone());
                 }
