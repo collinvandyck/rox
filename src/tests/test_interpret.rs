@@ -1,3 +1,10 @@
+use std::{
+    borrow::BorrowMut,
+    cell::RefCell,
+    io::{self, Cursor, Write},
+    rc::Rc,
+};
+
 use crate::prelude::*;
 
 #[test]
@@ -10,7 +17,33 @@ struct Run {
 }
 
 fn run_prog(prog: impl AsRef<str>) -> anyhow::Result<()> {
-    let mut stdout = vec![];
-    Lox::default().stdout(Box::new(stdout)).run(prog)?;
+    let mut buf = Buffer::default();
+    Lox::default().stdout(buf.clone()).run(&prog)?;
     Ok(())
+}
+
+#[derive(Clone, Default)]
+struct Buffer {
+    bs: Rc<RefCell<Vec<u8>>>,
+}
+
+impl Buffer {
+    fn take(mut self) -> Vec<u8> {
+        self.bs.as_ref().replace(vec![])
+    }
+}
+
+impl std::io::Write for Buffer {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.bs.as_ref().borrow_mut().write(buf)
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+impl From<Buffer> for Box<dyn io::Write> {
+    fn from(value: Buffer) -> Self {
+        Box::new(value)
+    }
 }
