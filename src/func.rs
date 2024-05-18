@@ -41,8 +41,11 @@ impl Callable {
                 let env = int.swap_env(env);
                 let res = int.execute_block(&stmt.body);
                 int.restore_env(env);
-                res.map_err(|err| CallableError::Call(err.into()))?;
-                Ok(Value::Nil)
+                match res {
+                    Ok(()) => Ok(Value::Nil),
+                    Err(Error::Return(val)) => Ok(val),
+                    Err(err) => Err(CallableError::Call(err.into())),
+                }
             }
         }
     }

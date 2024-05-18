@@ -58,7 +58,8 @@ stmt! {pub struct FunctionStmt {
 }}
 
 stmt! {pub struct ReturnStmt {
-    pub value: Token,
+    pub keyword: Token,
+    pub value: Expr,
 }}
 
 impl Stmt {

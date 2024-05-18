@@ -38,6 +38,9 @@ pub enum Error {
 
     #[error("could not print: {0}")]
     Print(#[source] io::Error),
+
+    #[error("not an actual error! used to unwind the call stack.")]
+    Return(Value),
 }
 
 pub struct Interpreter {
@@ -166,8 +169,9 @@ impl StmtVisitor for Interpreter {
         );
         Ok(())
     }
-    fn visit_return_stmt(&mut self, expr: &ReturnStmt) -> Self::Output {
-        todo!()
+    fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output {
+        let value = self.evaluate(&stmt.value)?;
+        Err(Error::Return(value))
     }
 }
 

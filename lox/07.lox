@@ -1,0 +1,6 @@
+fun increment(x) {
+	return x + 1;
+}
+
+print increment(41);
+

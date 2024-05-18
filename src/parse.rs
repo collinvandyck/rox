@@ -176,6 +176,9 @@ impl Parser {
         if self.match_any(TokenType::Print) {
             return self.print_stmt();
         }
+        if self.match_any(TokenType::Return) {
+            return self.return_stmt();
+        }
         if self.match_any(TokenType::While) {
             return self.while_stmt();
         }
@@ -186,6 +189,17 @@ impl Parser {
             return self.block_stmt();
         }
         self.expr_stmt()
+    }
+
+    fn return_stmt(&mut self) -> Result<Stmt, LineError> {
+        let keyword = self.previous();
+        let value = if self.check(TokenType::Semicolon) {
+            Expr::Literal(LiteralExpr { value: Value::Nil })
+        } else {
+            self.expr()?
+        };
+        self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Return(ReturnStmt { keyword, value }))
     }
 
     fn for_stmt(&mut self) -> Result<Stmt, LineError> {
