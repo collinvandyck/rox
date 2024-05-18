@@ -16,12 +16,6 @@ pub enum Callable {
     LoxFunction(LoxFunction),
 }
 
-trait CallableTrait {
-    fn call(&self, interpreter: &mut Interpreter, args: Vec<Value>)
-        -> Result<Value, CallableError>;
-    fn arity(&self) -> usize;
-}
-
 #[derive(Clone)]
 pub struct LoxFunction {
     pub stmt: Box<FunctionStmt>,
@@ -34,19 +28,10 @@ pub struct NativeCallable {
     pub func: Rc<dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>>,
 }
 
-impl CallableTrait for NativeCallable {
-    fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
-        self.func.as_ref()(int, args)
-    }
-    fn arity(&self) -> usize {
-        self.arity
-    }
-}
-
 impl Callable {
     pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         match self {
-            Self::Native(native) => native.call(int, args),
+            Self::Native(NativeCallable { func, .. }) => func(int, args),
             Self::LoxFunction(LoxFunction { stmt }) => {
                 assert_eq!(stmt.params.len(), args.len());
                 let mut env = int.new_env();
@@ -54,7 +39,7 @@ impl Callable {
                     env.define(param.lexeme.as_ref(), arg.clone());
                 }
                 let env = int.swap_env(env);
-                let res = int.interpret(&stmt.body);
+                let res = int.execute_block(&stmt.body);
                 int.restore_env(env);
                 res.map_err(|err| CallableError::Call(err.into()))?;
                 Ok(Value::Nil)
@@ -64,7 +49,7 @@ impl Callable {
 
     pub fn arity(&self) -> usize {
         match self {
-            Self::Native(func) => func.arity(),
+            Self::Native(NativeCallable { arity, .. }) => *arity,
             Self::LoxFunction(func) => func.stmt.params.len(),
         }
     }

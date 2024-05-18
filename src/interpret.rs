@@ -86,6 +86,17 @@ impl Interpreter {
         self
     }
 
+    pub fn execute_block(&mut self, stmts: &[Stmt]) -> Result<(), Error> {
+        self.env.push();
+        let res = (|| {
+            for stmt in stmts {
+                self.execute(stmt)?;
+            }
+            Ok(())
+        })();
+        self.env.pop()?;
+        res
+    }
     pub fn new_env(&self) -> Env {
         self.globals.clone().child()
     }
@@ -135,15 +146,7 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
-        self.env.push();
-        let res = (|| {
-            for stmt in &expr.statements {
-                self.execute(stmt)?;
-            }
-            Ok(())
-        })();
-        self.env.pop()?;
-        res
+        self.execute_block(&expr.statements)
     }
     fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output {
         if self.evaluate(&expr.condition)?.truthy() {
