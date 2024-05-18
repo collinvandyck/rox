@@ -99,7 +99,7 @@ impl Interpreter {
     }
 
     pub fn new_env(&self) -> Env {
-        self.env.clone().child()
+        self.globals.clone().child()
     }
 
     pub fn swap_env(&mut self, env: Env) -> Env {
