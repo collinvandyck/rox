@@ -7,7 +7,6 @@ pub mod interpret;
 pub mod lox;
 pub mod parse;
 pub mod prelude;
-pub mod resolver;
 pub mod scanner;
 pub mod stmt;
 

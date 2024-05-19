@@ -29,8 +29,10 @@ pub struct LoxFunction {
 pub struct NativeCallable {
     pub name: String,
     pub arity: usize,
-    pub func: Rc<dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>>,
+    pub func: Rc<CallableFn>,
 }
+
+type CallableFn = dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>;
 
 impl Callable {
     pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {

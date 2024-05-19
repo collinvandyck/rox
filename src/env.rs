@@ -121,12 +121,10 @@ impl Inner {
         }
     }
     fn define(&mut self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<()> {
-        if self.parent.is_some() {
-            if self.records.iter().any(|r| &r.name == name.as_ref()) {
-                return Err(EnvError::AlreadyDefined {
-                    name: name.as_ref().to_string(),
-                });
-            }
+        if self.parent.is_some() && self.records.iter().any(|r| r.name == name.as_ref()) {
+            return Err(EnvError::AlreadyDefined {
+                name: name.as_ref().to_string(),
+            });
         }
         let name = name.as_ref().to_string();
         let val = val.into();
@@ -155,7 +153,7 @@ impl Inner {
             .iter_mut()
             .take(cursor)
             .rev()
-            .find(|r| &r.name == name.as_ref())
+            .find(|r| r.name == name.as_ref())
         {
             let name = name.as_ref().to_string();
             let val = val.into();
