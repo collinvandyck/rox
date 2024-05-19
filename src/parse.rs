@@ -134,7 +134,14 @@ impl Parser {
         if self.match_any(TokenType::Var) {
             return self.var_decl();
         }
+        if self.match_any(TokenType::Class) {
+            return self.class_decl();
+        }
         self.stmt()
+    }
+
+    fn class_decl(&mut self) -> Result<Stmt, LineError> {
+        todo!()
     }
 
     fn function(&mut self, kind: FunctionKind) -> Result<Stmt, LineError> {
