@@ -16,6 +16,36 @@ fn test_interpret() {
     assert_eq!(run.lines(), vec!["Hello, World!"]);
 }
 
+#[test]
+fn test_fib() {
+    let prog = r#"
+        fun fib(n) {
+            if (n <= 1) return n;
+            return fib(n - 2) + fib(n - 1);
+        }
+        print fib(10);
+    "#;
+    let run = run_prog(prog).unwrap();
+    assert_eq!(run.lines(), vec!["55"]);
+}
+
+#[test]
+fn test_closure_binding() {
+    let prog = r#"
+        var a = "global";
+        {
+          fun showA() {
+            print a;
+          }
+          showA();
+          var a = "block";
+          showA();
+        }
+    "#;
+    let run = run_prog(prog).unwrap();
+    assert_eq!(run.lines(), vec!["global", "global"]);
+}
+
 struct Run {
     stdout: Vec<u8>,
 }

@@ -36,11 +36,11 @@ type Result<T> = std::result::Result<T, EnvError>;
 
 #[derive(Clone, Debug, Default)]
 pub struct Env {
-    inner: Rc<RefCell<Inner>>,
     // the offset into the inner record collection that instructs get/assign operations how far
     // into the vec of records that may be considered. because Env can be cloned, the cursor value
     // that will also be copied is how we snapshot a particular scoped set of env values.
     cursor: usize,
+    inner: Rc<RefCell<Inner>>,
 }
 
 impl Env {
@@ -219,20 +219,6 @@ mod tests {
 
         env.assign("fzz", "dzz").unwrap();
         assert_eq!(env.get(&id("fzz")).unwrap(), "dzz".into());
-    }
-
-    #[test]
-    fn test_cursor() {
-        let mut env: Env = Env::default();
-
-        // force a non-root env
-        let mut env = env.child();
-        env.define("foo", "bar").unwrap();
-        assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
-
-        let frozen = env.child();
-        env.assign("foo", "baz").unwrap();
-        assert_eq!(frozen.get(&id("foo")).unwrap(), "bar".into());
     }
 
     #[test]
