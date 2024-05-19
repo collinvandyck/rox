@@ -30,6 +30,35 @@ fn test_fib() {
 }
 
 #[test]
+fn test_double_define() {
+    let prog = r#"
+        fun bad() {
+          var a = "first";
+          var a = "second";
+        }
+        bad();
+    "#;
+    let err = run_prog(prog).unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("call: a binding 'a' already exists in this scope"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_global_return() {
+    let prog = r#"
+        return "at top level";
+    "#;
+    let err = run_prog(prog).unwrap_err();
+    assert!(
+        err.to_string().contains("can't return from top-level code"),
+        "{err}"
+    );
+}
+
+#[test]
 fn test_closure_binding() {
     let prog = r#"
         var a = "global";
@@ -46,6 +75,7 @@ fn test_closure_binding() {
     assert_eq!(run.lines(), vec!["global", "global"]);
 }
 
+#[derive(Debug)]
 struct Run {
     stdout: Vec<u8>,
 }
