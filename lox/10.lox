@@ -6,10 +6,6 @@ var a = "global";
   showA();
   var a = "block";
   showA();
-  fun showA() {
-    print a;
-  }
-  showA();
 }
 
 

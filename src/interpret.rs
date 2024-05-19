@@ -1,5 +1,5 @@
+use crate::env::Env;
 use crate::prelude::*;
-use crate::tree::Env;
 use std::io;
 use std::time::Instant;
 use std::{cell::RefCell, collections::HashMap, io::stdout, ops::Neg, rc::Rc};
@@ -19,7 +19,7 @@ pub enum Error {
     DivideByZero { line: usize },
 
     #[error(transparent)]
-    Env(#[from] tree::EnvError),
+    Env(#[from] env::EnvError),
 
     #[error("cannot evaluate undefined var {}", token.lexeme)]
     UndfinedVar { token: Token },
@@ -64,7 +64,8 @@ impl Default for Interpreter {
                     Ok(Value::Number(now.as_secs_f64()))
                 }),
             })),
-        );
+        )
+        .unwrap();
         Self {
             env,
             writer: Box::new(stdout()),
@@ -134,7 +135,7 @@ impl StmtVisitor for Interpreter {
             .map(|i| self.evaluate(i))
             .transpose()?
             .unwrap_or(Value::Undefined);
-        self.env.define(expr.name.lexeme.as_ref(), value);
+        self.env.define(expr.name.lexeme.as_ref(), value)?;
         Ok(())
     }
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
@@ -161,7 +162,7 @@ impl StmtVisitor for Interpreter {
                 stmt: stmt.clone().into(),
                 closure: self.env.clone(),
             })),
-        );
+        )?;
         Ok(())
     }
     fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output {

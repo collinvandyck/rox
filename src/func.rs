@@ -8,6 +8,9 @@ pub enum CallableError {
 
     #[error("call: {0}")]
     Call(Box<interpret::Error>),
+
+    #[error("call: {0}")]
+    Env(#[from] env::EnvError),
 }
 
 #[derive(Clone)]
@@ -19,7 +22,7 @@ pub enum Callable {
 #[derive(Clone)]
 pub struct LoxFunction {
     pub stmt: Box<FunctionStmt>,
-    pub closure: tree::Env,
+    pub closure: env::Env,
 }
 
 #[derive(Clone)]
@@ -37,7 +40,7 @@ impl Callable {
                 assert_eq!(stmt.params.len(), args.len());
                 let mut env = closure.child();
                 for (param, arg) in stmt.params.iter().zip(args.iter()) {
-                    env.define(param.lexeme.as_ref(), arg.clone());
+                    env.define(param.lexeme.as_ref(), arg.clone())?;
                 }
                 let env = int.swap_env(env);
                 let res = int.execute_block(&stmt.body);

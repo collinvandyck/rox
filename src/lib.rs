@@ -10,7 +10,6 @@ pub mod prelude;
 pub mod resolver;
 pub mod scanner;
 pub mod stmt;
-pub mod tree;
 
 #[cfg(test)]
 mod tests;

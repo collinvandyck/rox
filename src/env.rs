@@ -1,18 +1,19 @@
 use crate::prelude::*;
 use std::{
     borrow::{Borrow, BorrowMut},
-    cell::RefCell,
-    collections::HashMap,
-    rc::Rc,
+    collections::VecDeque,
 };
 
-#[derive(thiserror::Error, Debug, strum_macros::EnumIs, derive_more::From)]
+#[derive(thiserror::Error, Debug, strum_macros::EnumIs)]
 pub enum EnvError {
     #[error("undefined variable in assign '{}'", name)]
     UndefinedAssign { name: String },
 
     #[error("undefined variable '{}'", token.lexeme)]
     NotFound { token: Token },
+
+    #[error("a binding '{}' already exists in this scope", name)]
+    AlreadyDefined { name: String },
 
     #[error("no parent env to restore to")]
     NoParentEnv,
@@ -31,35 +32,43 @@ impl EnvError {
     }
 }
 
-#[derive(Clone, Default)]
-pub struct Env {
-    inner: Rc<RefCell<EnvInner>>,
-}
+type Result<T> = std::result::Result<T, EnvError>;
 
-impl std::fmt::Debug for Env {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.inner.as_ref().borrow().fmt(f)
-    }
+#[derive(Clone, Debug, Default)]
+pub struct Env {
+    inner: Rc<RefCell<Inner>>,
+    // the offset into the inner record collection that instructs get/assign operations how far
+    // into the vec of records that may be considered. because Env can be cloned, the cursor value
+    // that will also be copied is how we snapshot a particular scoped set of env values.
+    cursor: usize,
 }
 
 impl Env {
-    pub fn snapshot(&mut self) -> Self {
-        todo!()
+    pub fn new() -> Self {
+        Self::default()
     }
-    pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
-        self.inner.as_ref().borrow_mut().assign(name, val)
+
+    pub fn with_cursor(&self, cursor: usize) -> Self {
+        let mut clone = self.clone();
+        clone.cursor = cursor;
+        clone
     }
-    pub fn define(&self, name: impl AsRef<str>, val: impl Into<Value>) {
-        self.inner.as_ref().borrow_mut().define(name, val);
-    }
-    pub fn get(&self, token: &Token) -> Result<Value, EnvError> {
-        self.inner.as_ref().borrow().get(token)
-    }
+
     pub fn push(&mut self) {
-        let child = self.child();
-        *self = child;
+        let env = self.child();
+        *self = env;
     }
-    pub fn pop(&mut self) -> Result<(), EnvError> {
+
+    pub fn child(&self) -> Self {
+        let parent = self.clone();
+        let inner = Inner::new(Some(parent));
+        Env {
+            inner: Rc::new(RefCell::new(inner)),
+            cursor: 0,
+        }
+    }
+
+    pub fn pop(&mut self) -> Result<()> {
         let env = self
             .inner
             .as_ref()
@@ -70,65 +79,106 @@ impl Env {
         *self = env;
         Ok(())
     }
-    pub fn child(&self) -> Self {
-        let inner = EnvInner {
-            parent: Some(self.clone()),
-            ..Default::default()
-        };
-        Self {
-            inner: Rc::new(RefCell::new(inner)),
-        }
+
+    pub fn define(&mut self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<()> {
+        self.inner
+            .as_ref()
+            .borrow_mut()
+            .define(name.as_ref(), val)?;
+        self.cursor += 1;
+        Ok(())
+    }
+
+    pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<()> {
+        self.inner
+            .as_ref()
+            .borrow_mut()
+            .assign(name, val, self.cursor)
+    }
+
+    pub fn get(&self, token: &Token) -> Result<Value> {
+        self.inner.as_ref().borrow().get(token, self.cursor)
     }
 }
 
-#[derive(Default, Debug)]
-pub struct EnvInner {
+#[derive(Clone, Debug, Default)]
+struct Inner {
     parent: Option<Env>,
-    vars: Storage,
+    records: Vec<Record>,
 }
 
-#[derive(Default, Debug)]
-enum Storage {
-    #[default]
-    None,
-    Map(HashMap<String, Value>),
+#[derive(Clone, Debug)]
+struct Record {
+    name: String,
+    val: Value,
 }
 
-impl EnvInner {
-    fn define(&mut self, name: impl AsRef<str>, val: impl Into<Value>) {
-        match &mut self.vars {
-            storage @ Storage::None => {
-                *storage = Storage::Map(HashMap::from([(name.as_ref().to_string(), val.into())]));
-            }
-            Storage::Map(vars) => {
-                vars.insert(name.as_ref().to_string(), val.into());
-            }
+impl Inner {
+    fn new(parent: Option<Env>) -> Self {
+        Self {
+            parent,
+            records: vec![],
         }
     }
-    fn assign(&mut self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
-        match &mut self.vars {
-            Storage::None => {}
-            Storage::Map(vars) => {
-                if let Some(v) = vars.get_mut(name.as_ref()) {
-                    *v = val.into();
-                    return Ok(());
-                }
+    fn define(&mut self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<()> {
+        if self.parent.is_some() {
+            if self.records.iter().any(|r| &r.name == name.as_ref()) {
+                return Err(EnvError::AlreadyDefined {
+                    name: name.as_ref().to_string(),
+                });
             }
+        }
+        let name = name.as_ref().to_string();
+        let val = val.into();
+        let record = Record { name, val };
+        self.records.push(record);
+        Ok(())
+    }
+
+    fn cursor(&self, cursor: usize) -> usize {
+        if self.parent.is_some() {
+            cursor
+        } else {
+            self.records.len()
+        }
+    }
+
+    fn assign(
+        &mut self,
+        name: impl AsRef<str>,
+        val: impl Into<Value>,
+        cursor: usize,
+    ) -> Result<()> {
+        let cursor = self.cursor(cursor);
+        if let Some(found) = self
+            .records
+            .iter_mut()
+            .take(cursor)
+            .rev()
+            .find(|r| &r.name == name.as_ref())
+        {
+            let name = name.as_ref().to_string();
+            let val = val.into();
+            let record = Record { name, val };
+            *found = record;
+            return Ok(());
         }
         if let Some(parent) = &self.parent {
             return parent.assign(name, val);
         }
         Err(EnvError::undefined_assign(name))
     }
-    fn get(&self, token: &Token) -> Result<Value, EnvError> {
-        match &self.vars {
-            Storage::None => {}
-            Storage::Map(vars) => {
-                let f: Option<&Value> = vars.get(token.lexeme.as_ref());
-                if let Some(f) = f {
-                    return Ok(f.clone());
-                }
-            }
+
+    fn get(&self, token: &Token, cursor: usize) -> Result<Value> {
+        let cursor = self.cursor(cursor);
+        if let Some(found) = self
+            .records
+            .iter()
+            .take(cursor)
+            .rev()
+            .find(|r| &r.name == token.lexeme.as_ref())
+        {
+            return Ok(found.val.clone());
         }
         if let Some(parent) = &self.parent {
             return parent.get(token);
@@ -139,13 +189,14 @@ impl EnvInner {
 
 #[cfg(test)]
 mod tests {
+    use super::Env;
     use super::*;
 
     #[test]
     fn test_env() {
-        let env = Env::default();
-        env.define("foo", "bar");
-        env.define("fzz", "bzz");
+        let mut env = Env::default();
+        env.define("foo", "bar").unwrap();
+        env.define("fzz", "bzz").unwrap();
         assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
         assert_eq!(env.get(&id("fzz")).unwrap(), "bzz".into());
         assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
@@ -154,13 +205,14 @@ mod tests {
             .unwrap_err()
             .is_undefined_assign());
 
-        let child = env.child();
-        assert_eq!(child.get(&id("foo")).unwrap(), "bar".into());
-        assert!(child.get(&id("fuz")).unwrap_err().is_not_found());
-        child.define("foo", "baz");
-        assert_eq!(child.get(&id("foo")).unwrap(), "baz".into());
-        assert_eq!(child.get(&id("fzz")).unwrap(), "bzz".into());
+        env.push();
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
+        assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
+        env.define("foo", "baz").unwrap();
+        assert_eq!(env.get(&id("foo")).unwrap(), "baz".into());
+        assert_eq!(env.get(&id("fzz")).unwrap(), "bzz".into());
 
+        env.pop();
         assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
         assert!(env.get(&id("fuz")).unwrap_err().is_not_found());
         assert_eq!(env.get(&id("fzz")).unwrap(), "bzz".into());
@@ -170,19 +222,35 @@ mod tests {
     }
 
     #[test]
+    fn test_cursor() {
+        let mut env: Env = Env::default();
+
+        // force a non-root env
+        let mut env = env.child();
+        env.define("foo", "bar").unwrap();
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
+
+        let frozen = env.child();
+        env.assign("foo", "baz").unwrap();
+        assert_eq!(frozen.get(&id("foo")).unwrap(), "bar".into());
+    }
+
+    #[test]
     fn test_nested_assign() {
-        let env = Env::default();
-        env.define("foo", "bar");
-        env.assign("foo", "bar2");
+        let mut env = Env::default();
+        env.define("foo", "bar").unwrap();
+        env.assign("foo", "bar2").unwrap();
 
-        let child = env.child();
-        child.define("foo", "bar");
-        assert_eq!(child.get(&id("foo")).unwrap(), "bar".into());
+        env.push();
+        env.define("foo", "bar").unwrap();
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar".into());
+        env.pop();
 
-        let child = env.child();
-        assert_eq!(child.get(&id("foo")).unwrap(), "bar2".into());
-        child.assign("foo", "bar3");
-        assert_eq!(child.get(&id("foo")).unwrap(), "bar3".into());
+        env.push();
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar2".into());
+        env.assign("foo", "bar3");
+        assert_eq!(env.get(&id("foo")).unwrap(), "bar3".into());
+        env.pop();
 
         assert_eq!(env.get(&id("foo")).unwrap(), "bar3".into());
     }
@@ -190,11 +258,11 @@ mod tests {
     #[test]
     fn test_push_pop() {
         let mut env = Env::default();
-        env.define("foo", "bar");
-        env.assign("foo", "bar2");
+        env.define("foo", "bar").unwrap();
+        env.assign("foo", "bar2").unwrap();
 
         env.push();
-        env.define("foo", "baz");
+        env.define("foo", "baz").unwrap();
         assert_eq!(env.get(&id("foo")).unwrap(), "baz".into());
 
         env.pop();
