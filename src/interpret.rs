@@ -42,11 +42,15 @@ pub enum Error {
 
     #[error("not an actual error! used to unwind the call stack.")]
     Return(Value),
+
+    #[error("can't return from top-level code.")]
+    TopLevelReturn,
 }
 
 pub struct Interpreter {
     env: Env,
     writer: Box<dyn io::Write>,
+    fn_depth: usize,
 }
 
 impl Default for Interpreter {
@@ -69,6 +73,7 @@ impl Default for Interpreter {
         Self {
             env,
             writer: Box::new(stdout()),
+            fn_depth: 0,
         }
     }
 }
@@ -166,6 +171,9 @@ impl StmtVisitor for Interpreter {
         Ok(())
     }
     fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output {
+        if self.fn_depth == 0 {
+            return Err(Error::TopLevelReturn);
+        }
         let value = self.evaluate(&stmt.value)?;
         Err(Error::Return(value))
     }
@@ -292,6 +300,9 @@ impl ExprVisitor for Interpreter {
                 actual: args.len(),
             });
         }
-        Ok(func.call(self, args)?)
+        self.fn_depth += 1;
+        let fn_res = func.call(self, args);
+        self.fn_depth -= 1;
+        Ok(fn_res?)
     }
 }
