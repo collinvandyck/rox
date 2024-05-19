@@ -21,7 +21,9 @@ impl Resolver {
         self.scopes.push(HashMap::default());
     }
 
-    fn end_scope(&mut self) {}
+    fn end_scope(&mut self) {
+        self.scopes.pop();
+    }
 
     fn resolve_expr(&mut self, expr: &Expr) -> Result<(), ResolverError> {
         expr.accept(self)?;
@@ -39,41 +41,59 @@ impl Resolver {
         }
         Ok(())
     }
+
+    fn declare(&mut self, name: &Token) {
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name.lexeme.to_string(), false);
+        }
+    }
+
+    fn define(&mut self, name: &Token) {
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name.lexeme.to_string(), true);
+        }
+    }
 }
 
 impl ExprVisitor for Resolver {
     type Output = Result<(), ResolverError>;
 
     fn visit_binary_expr(&mut self, expr: &BinaryExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_literal_expr(&mut self, expr: &LiteralExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_unary_expr(&mut self, expr: &UnaryExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_group_expr(&mut self, expr: &GroupExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_var_expr(&mut self, expr: &VarExpr) -> Self::Output {
-        todo!()
+        let valid = self
+            .scopes
+            .last()
+            .and_then(|m| m.get(expr.name.lexeme.as_ref()))
+            .copied()
+            == Some(false);
+        Ok(())
     }
 
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output {
-        todo!()
+        Ok(())
     }
 }
 
@@ -81,15 +101,20 @@ impl StmtVisitor for Resolver {
     type Output = Result<(), ResolverError>;
 
     fn visit_expr_stmt(&mut self, stmt: &ExprStmt) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_print_stmt(&mut self, stmt: &PrintStmt) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_var_stmt(&mut self, stmt: &VarStmt) -> Self::Output {
-        todo!()
+        self.declare(&stmt.name);
+        if let Some(initializer) = &stmt.initializer {
+            self.resolve_expr(initializer)?;
+        }
+        self.define(&stmt.name);
+        Ok(())
     }
 
     fn visit_block_stmt(&mut self, stmt: &BlockStmt) -> Self::Output {
@@ -100,18 +125,18 @@ impl StmtVisitor for Resolver {
     }
 
     fn visit_if_stmt(&mut self, stmt: &IfStmt) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output {
-        todo!()
+        Ok(())
     }
 
     fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output {
-        todo!()
+        Ok(())
     }
 }
