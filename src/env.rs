@@ -43,6 +43,9 @@ impl std::fmt::Debug for Env {
 }
 
 impl Env {
+    pub fn snapshot(&mut self) -> Self {
+        todo!()
+    }
     pub fn assign(&self, name: impl AsRef<str>, val: impl Into<Value>) -> Result<(), EnvError> {
         self.inner.as_ref().borrow_mut().assign(name, val)
     }
