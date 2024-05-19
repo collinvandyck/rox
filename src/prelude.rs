@@ -8,6 +8,8 @@ pub use lox::*;
 pub use parse::*;
 pub use resolver::*;
 pub use scanner::*;
+pub use std::cell::RefCell;
+pub use std::rc::Rc;
 pub use std::{
     fs,
     io::stdin,

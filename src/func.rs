@@ -19,7 +19,7 @@ pub enum Callable {
 #[derive(Clone)]
 pub struct LoxFunction {
     pub stmt: Box<FunctionStmt>,
-    pub closure: Env,
+    pub closure: tree::Env,
 }
 
 #[derive(Clone)]

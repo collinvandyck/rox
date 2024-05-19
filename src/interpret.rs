@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::tree::Env;
 use std::io;
 use std::time::Instant;
 use std::{cell::RefCell, collections::HashMap, io::stdout, ops::Neg, rc::Rc};
@@ -18,7 +19,7 @@ pub enum Error {
     DivideByZero { line: usize },
 
     #[error(transparent)]
-    Env(#[from] EnvError),
+    Env(#[from] tree::EnvError),
 
     #[error("cannot evaluate undefined var {}", token.lexeme)]
     UndfinedVar { token: Token },
@@ -96,10 +97,6 @@ impl Interpreter {
         })();
         self.env.pop()?;
         res
-    }
-
-    pub fn new_env(&self) -> Env {
-        self.env.child()
     }
 
     pub fn swap_env(&mut self, env: Env) -> Env {
