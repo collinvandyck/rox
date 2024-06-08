@@ -97,10 +97,11 @@ fn test_print_class() {
 fn test_new_bagel() {
     let prog = r#"
         class Bagel {}
-        Bagel();
+        var bagel = Bagel();
+        print bagel;
     "#;
     let run = run_prog(prog).unwrap();
-    assert_eq!(run.lines(), Vec::<String>::default());
+    assert_eq!(run.lines(), vec!["Bagel instance"]);
 }
 
 #[derive(Debug)]

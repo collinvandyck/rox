@@ -342,6 +342,7 @@ pub enum Value {
     Bool(bool),
     Function(Function),
     Class(Class),
+    Instance(Instance),
     Nil,
     Undefined,
 }
@@ -376,11 +377,16 @@ impl Value {
             Self::Undefined => "undefined".to_string(),
             Self::Function(f) => f.to_string(),
             Self::Class(c) => c.to_string(),
+            Self::Instance(i) => i.to_string(),
         }
     }
     pub fn truthy(&self) -> bool {
         match self {
-            Self::Class(_) | Self::Number(_) | Self::String(_) | Self::Function(_) => true,
+            Self::Class(_)
+            | Self::Instance(_)
+            | Self::Number(_)
+            | Self::String(_)
+            | Self::Function(_) => true,
             Self::Bool(b) => *b,
             Self::Nil | Self::Undefined => false,
         }
@@ -397,6 +403,7 @@ impl std::fmt::Display for Value {
             Self::Undefined => write!(f, "undefined"),
             Self::Function(func) => func.fmt(f),
             Self::Class(c) => c.fmt(f),
+            Self::Instance(i) => i.fmt(f),
         }
     }
 }
