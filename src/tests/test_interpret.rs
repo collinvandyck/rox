@@ -83,10 +83,20 @@ fn test_print_class() {
                 return "Scones";
             }
         }
-    print DevonshireCream;
+        print DevonshireCream;
     "#;
     let run = run_prog(prog).unwrap();
     assert_eq!(run.lines(), vec!["DevonshireCream"]);
+}
+
+#[test]
+fn test_new_bagel() {
+    let prog = r#"
+        class Bagel {}
+        Bagel()
+    "#;
+    let run = run_prog(prog).unwrap();
+    assert_eq!(run.lines(), Vec::<String>::default());
 }
 
 #[derive(Debug)]
