@@ -177,6 +177,9 @@ impl StmtVisitor for Interpreter {
         let value = self.evaluate(&stmt.value)?;
         Err(Error::Return(value))
     }
+    fn visit_class_stmt(&mut self, stmt: &ClassStmt) -> Self::Output {
+        todo!()
+    }
 }
 
 impl ExprVisitor for Interpreter {

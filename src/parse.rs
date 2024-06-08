@@ -53,12 +53,19 @@ pub enum LineError {
 
 trait LineResultExt<T> {
     fn context(self, ctx: impl AsRef<str>) -> Result<T, LineError>;
+    fn for_fn_kind(self, fk: FunctionKind) -> Result<T, LineError>;
 }
 
 impl<T> LineResultExt<T> for Result<T, LineError> {
     /// extends a LineError result with additional context info
     fn context(self, ctx: impl AsRef<str>) -> Result<T, LineError> {
         self.map_err(|err| err.context(ctx.as_ref().to_string()))
+    }
+    fn for_fn_kind(self, kind: FunctionKind) -> Result<T, LineError> {
+        self.map_err(|err| LineError::FunctionKind {
+            kind,
+            err: err.into(),
+        })
     }
 }
 
@@ -184,8 +191,8 @@ impl Parser {
     }
 
     fn function(&mut self, kind: FunctionKind) -> Result<Stmt, LineError> {
-        let name = self.consume_for_fn(kind, TT::Identifier)?;
-        self.consume_for_fn(kind, TT::LeftParen)?;
+        let name = self.consume(TT::Identifier).for_fn_kind(kind)?;
+        self.consume(TT::LeftParen).for_fn_kind(kind)?;
         let mut params = vec![];
         if !self.check(TT::RightParen) {
             loop {
@@ -198,7 +205,7 @@ impl Parser {
         if params.len() >= 255 {
             self.smol_error(LineError::TooManyParams { token: self.peek() });
         }
-        self.consume_for_fn(kind, TT::RightParen)?;
+        self.consume(TT::RightParen).for_fn_kind(kind)?;
         self.consume(TT::LeftBrace)?;
         let body = self.block()?;
         Ok(Stmt::Function(FunctionStmt { name, params, body }))
@@ -524,14 +531,6 @@ impl Parser {
             }
         }
         false
-    }
-
-    fn consume_for_fn(&mut self, kind: FunctionKind, typ: TT) -> Result<Token, LineError> {
-        if self.match_any(typ) {
-            return Ok(self.previous());
-        }
-        let err = self.expected_typ_error(typ);
-        Err(LineError::fn_kind(kind, err))
     }
 
     fn consume(&mut self, typ: TT) -> Result<Token, LineError> {
