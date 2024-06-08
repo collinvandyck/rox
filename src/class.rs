@@ -1,5 +1,9 @@
 use crate::prelude::*;
-use std::{collections::HashMap, fmt::Display};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    collections::HashMap,
+    fmt::Display,
+};
 
 /// The *runtime* representation of a lox class
 #[derive(Clone, Debug, PartialEq)]
@@ -16,7 +20,12 @@ pub enum InstanceError {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Instance {
     class: Class,
-    fields: HashMap<String, Value>,
+    fields: Fields,
+}
+
+#[derive(Clone, Debug, PartialEq, Default)]
+struct Fields {
+    vals: Rc<RefCell<HashMap<String, Value>>>,
 }
 
 impl Class {
@@ -31,14 +40,24 @@ impl Instance {
     pub fn get(&self, name: impl AsRef<str>) -> Result<Value, InstanceError> {
         let name = name.as_ref();
         self.fields
+            .vals
+            .as_ref()
+            .borrow()
             .get(name)
             .ok_or_else(|| InstanceError::UndefinedProperty {
                 name: name.to_string(),
             })
             .cloned()
     }
+
     pub fn set(&self, name: impl AsRef<str>, value: Value) -> Result<Value, InstanceError> {
-        todo!()
+        let name = name.as_ref();
+        self.fields
+            .vals
+            .as_ref()
+            .borrow_mut()
+            .insert(name.to_string(), value);
+        Ok(Value::Nil)
     }
 }
 
@@ -47,7 +66,7 @@ impl Callable for Class {
     fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         Ok(Value::from(Instance {
             class: self.clone(),
-            fields: HashMap::default(),
+            fields: Fields::default(),
         }))
     }
 
