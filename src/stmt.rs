@@ -17,6 +17,7 @@ pub enum Stmt {
     While(WhileStmt),
     Function(FunctionStmt),
     Return(ReturnStmt),
+    Class(ClassStmt),
 }
 
 stmt! {
@@ -62,6 +63,11 @@ stmt! {pub struct ReturnStmt {
     pub value: Expr,
 }}
 
+stmt! {pub struct ClassStmt {
+    pub name: Token,
+    pub methods :Vec<Stmt>,
+}}
+
 impl Stmt {
     pub fn accept<Out>(&self, visitor: &mut impl StmtVisitor<Output = Out>) -> Out {
         match self {
@@ -73,6 +79,7 @@ impl Stmt {
             Stmt::While(s) => visitor.visit_while_stmt(s),
             Stmt::Function(s) => visitor.visit_function_stmt(s),
             Stmt::Return(s) => visitor.visit_return_stmt(s),
+            Stmt::Class(s) => visitor.visit_class_stmt(s),
         }
     }
 }
@@ -88,4 +95,5 @@ pub trait StmtVisitor {
     fn visit_while_stmt(&mut self, stmt: &WhileStmt) -> Self::Output;
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output;
     fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output;
+    fn visit_class_stmt(&mut self, stmt: &ClassStmt) -> Self::Output;
 }
