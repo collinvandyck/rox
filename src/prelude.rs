@@ -1,4 +1,5 @@
 pub use crate::*;
+pub use class::*;
 pub use expr::*;
 pub use func::*;
 pub use interpret::*;

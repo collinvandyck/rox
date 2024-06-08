@@ -341,6 +341,7 @@ pub enum Value {
     String(String),
     Bool(bool),
     Function(Callable),
+    Class(Class),
     Nil,
     Undefined,
 }
@@ -360,17 +361,18 @@ pub enum ValueError {
 impl Value {
     pub fn to_lox(&self) -> String {
         match self {
-            Value::Number(v) => v.to_string(),
-            Value::String(s) => s.clone(),
-            Value::Bool(b) => b.to_string(),
-            Value::Nil => "nil".to_string(),
-            Value::Undefined => "undefined".to_string(),
-            Value::Function(f) => f.to_string(),
+            Self::Number(v) => v.to_string(),
+            Self::String(s) => s.clone(),
+            Self::Bool(b) => b.to_string(),
+            Self::Nil => "nil".to_string(),
+            Self::Undefined => "undefined".to_string(),
+            Self::Function(f) => f.to_string(),
+            Self::Class(c) => c.to_string(),
         }
     }
     pub fn truthy(&self) -> bool {
         match self {
-            Self::Number(_) | Self::String(_) | Self::Function(_) => true,
+            Self::Class(_) | Self::Number(_) | Self::String(_) | Self::Function(_) => true,
             Self::Bool(b) => *b,
             Self::Nil | Self::Undefined => false,
         }
@@ -386,6 +388,7 @@ impl std::fmt::Display for Value {
             Self::Nil => write!(f, "nil"),
             Self::Undefined => write!(f, "undefined"),
             Self::Function(func) => func.fmt(f),
+            Self::Class(c) => c.fmt(f),
         }
     }
 }

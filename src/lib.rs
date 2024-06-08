@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+pub mod class;
 pub mod env;
 pub mod expr;
 pub mod func;
