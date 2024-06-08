@@ -1,9 +1,12 @@
 use std::{
     borrow::BorrowMut,
     cell::RefCell,
+    fmt::Display,
     io::{self, Cursor, Write},
     rc::Rc,
 };
+
+use tracing_test::traced_test;
 
 use crate::prelude::*;
 
@@ -90,10 +93,11 @@ fn test_print_class() {
 }
 
 #[test]
+#[traced_test]
 fn test_new_bagel() {
     let prog = r#"
         class Bagel {}
-        Bagel()
+        Bagel();
     "#;
     let run = run_prog(prog).unwrap();
     assert_eq!(run.lines(), Vec::<String>::default());
@@ -117,14 +121,32 @@ impl Run {
 }
 
 fn run_prog(prog: impl AsRef<str>) -> Result<Run, Box<dyn std::error::Error>> {
-    let mut buf = Buffer::default();
-    Lox::default().stdout(buf.clone()).run(&prog)?;
-    Ok(Run { stdout: buf.take() })
+    let mut stdout = Buffer::default();
+    let mut stderr = Buffer::default();
+    if let Err(err) = Lox::default()
+        .stdout(stdout.clone())
+        .stderr(stderr.clone())
+        .run(&prog)
+    {
+        eprintln!("{stdout}");
+        return Err(err.into());
+    }
+    Ok(Run {
+        stdout: stdout.take(),
+    })
 }
 
 #[derive(Clone, Default)]
 struct Buffer {
     bs: Rc<RefCell<Vec<u8>>>,
+}
+
+impl Display for Buffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = self.bs.as_ref().borrow().clone();
+        let out = String::from_utf8_lossy(&out);
+        write!(f, "{out}")
+    }
 }
 
 impl Buffer {

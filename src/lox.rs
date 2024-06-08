@@ -42,7 +42,12 @@ impl Lox {
     }
 
     pub fn stdout(mut self, w: impl Into<Box<dyn io::Write>>) -> Self {
-        self.interpreter = self.interpreter.with_writer(w.into());
+        self.interpreter = self.interpreter.with_stdout(w.into());
+        self
+    }
+
+    pub fn stderr(mut self, w: impl Into<Box<dyn io::Write>>) -> Self {
+        self.interpreter = self.interpreter.with_stderr(w.into());
         self
     }
 }

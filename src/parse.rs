@@ -1,3 +1,5 @@
+use std::io::{self, stderr};
+
 use crate::prelude::*;
 type TT = TokenType;
 
@@ -5,6 +7,7 @@ pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
     errs: Vec<LineError>,
+    stderr: Box<dyn io::Write>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -98,6 +101,7 @@ impl Parser {
             tokens,
             current: 0,
             errs: vec![],
+            stderr: Box::new(stderr()),
         }
     }
 

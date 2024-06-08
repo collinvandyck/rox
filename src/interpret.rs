@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::prelude::*;
-use std::io;
+use std::io::{self, stderr};
 use std::time::Instant;
 use std::{cell::RefCell, collections::HashMap, io::stdout, ops::Neg, rc::Rc};
 
@@ -49,7 +49,8 @@ pub enum Error {
 
 pub struct Interpreter {
     env: Env,
-    writer: Box<dyn io::Write>,
+    stdout: Box<dyn io::Write>,
+    stderr: Box<dyn io::Write>,
     fn_depth: usize,
 }
 
@@ -72,7 +73,8 @@ impl Default for Interpreter {
         .unwrap();
         Self {
             env,
-            writer: Box::new(stdout()),
+            stdout: Box::new(stdout()),
+            stderr: Box::new(stderr()),
             fn_depth: 0,
         }
     }
@@ -90,8 +92,13 @@ impl Interpreter {
         expr.accept(self)
     }
 
-    pub fn with_writer(mut self, w: Box<dyn io::Write>) -> Self {
-        self.writer = w;
+    pub fn with_stdout(mut self, w: Box<dyn io::Write>) -> Self {
+        self.stdout = w;
+        self
+    }
+
+    pub fn with_stderr(mut self, w: Box<dyn io::Write>) -> Self {
+        self.stderr = w;
         self
     }
 
@@ -120,8 +127,12 @@ impl Interpreter {
         stmt.accept(self)
     }
 
-    fn writer(&mut self) -> &mut dyn io::Write {
-        self.writer.as_mut()
+    fn stderr(&mut self) -> &mut dyn io::Write {
+        self.stderr.as_mut()
+    }
+
+    fn stdout(&mut self) -> &mut dyn io::Write {
+        self.stdout.as_mut()
     }
 }
 
@@ -134,7 +145,7 @@ impl StmtVisitor for Interpreter {
 
     fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
         let literal = self.evaluate(&expr.expr)?;
-        writeln!(self.writer(), "{}", literal.to_lox()).map_err(Error::Print)?;
+        writeln!(self.stdout(), "{}", literal.to_lox()).map_err(Error::Print)?;
         Ok(())
     }
 
