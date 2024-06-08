@@ -332,4 +332,8 @@ impl ExprVisitor for Interpreter {
         self.fn_depth -= 1;
         Ok(fn_res?)
     }
+
+    fn visit_get_expr(&mut self, expr: &GetExpr) -> Self::Output {
+        todo!()
+    }
 }

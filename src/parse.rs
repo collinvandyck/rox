@@ -451,7 +451,7 @@ impl Parser {
         self.call()
     }
 
-    // call -> primary ( "(" arguments? ")" )* ;
+    // call -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     // arguments -> expression ( "," expression )* ;
     fn call(&mut self) -> Result<Expr, LineError> {
         let mut expr = self.primary()?;

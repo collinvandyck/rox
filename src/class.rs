@@ -24,7 +24,7 @@ impl Class {
 /// A Class is callable in the sense that the class itself is also a constructor
 impl Callable for Class {
     fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
-        Ok(Value::Instance(Instance {
+        Ok(Value::from(Instance {
             class: self.clone(),
         }))
     }

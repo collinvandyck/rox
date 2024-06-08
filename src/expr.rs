@@ -10,6 +10,7 @@ pub enum Expr {
     Var(VarExpr),
     Assign(AssignExpr),
     Call(CallExpr),
+    Get(GetExpr),
 }
 
 impl Expr {
@@ -91,6 +92,12 @@ pub struct CallExpr {
     pub args: Vec<Expr>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct GetExpr {
+    object: Box<Expr>,
+    name: Token,
+}
+
 impl Expr {
     pub fn accept<Out>(&self, visitor: &mut impl ExprVisitor<Output = Out>) -> Out {
         match self {
@@ -102,6 +109,7 @@ impl Expr {
             Expr::Assign(e) => visitor.visit_assign_expr(e),
             Expr::Logical(e) => visitor.visit_logical_expr(e),
             Expr::Call(e) => visitor.visit_call_expr(e),
+            Expr::Get(e) => visitor.visit_get_expr(e),
         }
     }
 }
@@ -116,4 +124,5 @@ pub trait ExprVisitor {
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output;
     fn visit_logical_expr(&mut self, expr: &LogicalExpr) -> Self::Output;
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output;
+    fn visit_get_expr(&mut self, expr: &GetExpr) -> Self::Output;
 }
