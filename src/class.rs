@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 /// The *runtime* representation of a lox class
 #[derive(Clone, Debug, PartialEq)]
@@ -7,9 +7,16 @@ pub struct Class {
     name: String,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum InstanceError {
+    #[error("undefined property '{name}'")]
+    UndefinedProperty { name: String },
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Instance {
     class: Class,
+    fields: HashMap<String, Value>,
 }
 
 impl Class {
@@ -21,7 +28,7 @@ impl Class {
 }
 
 impl Instance {
-    pub fn get(&self, name: &Token) -> Value {
+    pub fn get(&self, name: &Token) -> Result<Value, InstanceError> {
         todo!()
     }
 }
@@ -31,6 +38,7 @@ impl Callable for Class {
     fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         Ok(Value::from(Instance {
             class: self.clone(),
+            fields: HashMap::default(),
         }))
     }
 

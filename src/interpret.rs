@@ -48,6 +48,13 @@ pub enum Error {
 
     #[error("can't return from top-level code.")]
     TopLevelReturn,
+
+    #[error("line {}: {err}", token.line)]
+    InstanceError {
+        token: Token,
+        #[source]
+        err: InstanceError,
+    },
 }
 
 pub struct Interpreter {
@@ -343,6 +350,11 @@ impl ExprVisitor for Interpreter {
                 token: expr.name.clone(),
             });
         };
-        Ok(instance.get(&expr.name))
+        Ok(instance
+            .get(&expr.name)
+            .map_err(|err| Error::InstanceError {
+                token: expr.name.clone(),
+                err,
+            })?)
     }
 }
