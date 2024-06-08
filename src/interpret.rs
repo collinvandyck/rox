@@ -221,7 +221,7 @@ impl ExprVisitor for Interpreter {
 
     fn visit_assign_expr(&mut self, expr: &AssignExpr) -> Self::Output {
         let val: Value = self.evaluate(&expr.value)?;
-        self.env.assign(expr.name.lexeme.as_ref(), val.clone())?;
+        self.env.assign(&expr.name, val.clone())?;
         Ok(val)
     }
 

@@ -10,6 +10,7 @@ pub mod parse;
 pub mod prelude;
 pub mod scanner;
 pub mod stmt;
+pub mod value;
 
 #[cfg(test)]
 mod tests;

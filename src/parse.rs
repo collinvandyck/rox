@@ -371,10 +371,11 @@ impl Parser {
             };
             let equal = self.previous();
             let value = self.assignment()?;
-            return Ok(Expr::Assign(AssignExpr {
+            return Ok(AssignExpr {
                 name,
                 value: value.into(),
-            }));
+            }
+            .into());
         }
         Ok(expr)
     }
