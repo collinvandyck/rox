@@ -85,9 +85,11 @@ impl Interpreter {
         }
         Ok(())
     }
+
     pub fn evaluate(&mut self, expr: &Expr) -> Result<Value, Error> {
         expr.accept(self)
     }
+
     pub fn with_writer(mut self, w: Box<dyn io::Write>) -> Self {
         self.writer = w;
         self
@@ -117,6 +119,7 @@ impl Interpreter {
     fn execute(&mut self, stmt: &Stmt) -> Result<(), Error> {
         stmt.accept(self)
     }
+
     fn writer(&mut self) -> &mut dyn io::Write {
         self.writer.as_mut()
     }
@@ -128,11 +131,13 @@ impl StmtVisitor for Interpreter {
         self.evaluate(&expr.expr)?;
         Ok(())
     }
+
     fn visit_print_stmt(&mut self, expr: &PrintStmt) -> Self::Output {
         let literal = self.evaluate(&expr.expr)?;
         writeln!(self.writer(), "{}", literal.to_lox()).map_err(Error::Print)?;
         Ok(())
     }
+
     fn visit_var_stmt(&mut self, expr: &VarStmt) -> Self::Output {
         let value: Value = expr
             .initializer
@@ -146,6 +151,7 @@ impl StmtVisitor for Interpreter {
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
         self.execute_block(&expr.statements)
     }
+
     fn visit_if_stmt(&mut self, expr: &IfStmt) -> Self::Output {
         if self.evaluate(&expr.condition)?.truthy() {
             self.execute(&expr.then_stmt)?;
@@ -154,12 +160,14 @@ impl StmtVisitor for Interpreter {
         }
         Ok(())
     }
+
     fn visit_while_stmt(&mut self, expr: &WhileStmt) -> Self::Output {
         while (self.evaluate(&expr.condition)?.truthy()) {
             self.execute(&expr.body)?;
         }
         Ok(())
     }
+
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output {
         self.env.define(
             &stmt.name,
@@ -170,6 +178,7 @@ impl StmtVisitor for Interpreter {
         )?;
         Ok(())
     }
+
     fn visit_return_stmt(&mut self, stmt: &ReturnStmt) -> Self::Output {
         if self.fn_depth == 0 {
             return Err(Error::TopLevelReturn);
@@ -177,9 +186,12 @@ impl StmtVisitor for Interpreter {
         let value = self.evaluate(&stmt.value)?;
         Err(Error::Return(value))
     }
+
     fn visit_class_stmt(&mut self, stmt: &ClassStmt) -> Self::Output {
         self.env.define(&stmt.name, Value::Nil)?;
-        todo!()
+        let class = Class::new(&stmt.name);
+        self.env.assign(&stmt.name, class)?;
+        Ok(())
     }
 }
 

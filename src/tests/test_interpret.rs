@@ -75,6 +75,20 @@ fn test_closure_binding() {
     assert_eq!(run.lines(), vec!["global", "global"]);
 }
 
+#[test]
+fn test_print_class() {
+    let prog = r#"
+        class DevonshireCream {
+            serveOn() {
+                return "Scones";
+            }
+        }
+    print DevonshireCream;
+    "#;
+    let run = run_prog(prog).unwrap();
+    assert_eq!(run.lines(), vec!["DevonshireCream"]);
+}
+
 #[derive(Debug)]
 struct Run {
     stdout: Vec<u8>,
