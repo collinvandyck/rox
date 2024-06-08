@@ -59,7 +59,7 @@ impl Default for Interpreter {
         let mut env = Env::default();
         env.define(
             "clock",
-            Value::Function(Callable::Native(NativeCallable {
+            Value::Function(Callable::Native(NativeFunction {
                 name: "clock".to_string(),
                 arity: 0,
                 func: Rc::new(|interpreter: &mut Interpreter, args: Vec<Value>| {

@@ -15,7 +15,7 @@ pub enum CallableError {
 
 #[derive(Clone)]
 pub enum Callable {
-    Native(NativeCallable),
+    Native(NativeFunction),
     LoxFunction(LoxFunction),
 }
 
@@ -26,7 +26,7 @@ pub struct LoxFunction {
 }
 
 #[derive(Clone)]
-pub struct NativeCallable {
+pub struct NativeFunction {
     pub name: String,
     pub arity: usize,
     pub func: Rc<CallableFn>,
@@ -37,7 +37,7 @@ type CallableFn = dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, Callable
 impl Callable {
     pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         match self {
-            Self::Native(NativeCallable { func, .. }) => func(int, args),
+            Self::Native(NativeFunction { func, .. }) => func(int, args),
             Self::LoxFunction(LoxFunction { stmt, closure }) => {
                 assert_eq!(stmt.params.len(), args.len());
                 let mut env = closure.child();
@@ -58,7 +58,7 @@ impl Callable {
 
     pub fn arity(&self) -> usize {
         match self {
-            Self::Native(NativeCallable { arity, .. }) => *arity,
+            Self::Native(NativeFunction { arity, .. }) => *arity,
             Self::LoxFunction(func) => func.stmt.params.len(),
         }
     }
@@ -77,7 +77,7 @@ impl PartialEq for Callable {
 impl std::fmt::Debug for Callable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Native(NativeCallable { name, arity, .. }) => f
+            Self::Native(NativeFunction { name, arity, .. }) => f
                 .debug_struct("Native")
                 .field("name", name)
                 .field("arity", arity)
