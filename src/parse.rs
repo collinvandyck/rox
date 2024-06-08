@@ -358,6 +358,9 @@ impl Parser {
         self.assignment()
     }
 
+    // assignment → ( call "." )? IDENTIFIER "=" assignment
+    //              | logic_or ;
+    //
     // assignment is right-associative so we recurse to build the RHS
     fn assignment(&mut self) -> Result<Expr, LineError> {
         debug!("assignment peek={:?}", self.peek());
@@ -451,7 +454,7 @@ impl Parser {
         self.call()
     }
 
-    // call -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
+    // call      -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     // arguments -> expression ( "," expression )* ;
     fn call(&mut self) -> Result<Expr, LineError> {
         let mut expr = self.primary()?;

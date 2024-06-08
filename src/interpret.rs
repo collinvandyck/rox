@@ -357,4 +357,8 @@ impl ExprVisitor for Interpreter {
                 err,
             })?)
     }
+
+    fn visit_set_expr(&mut self, expr: &SetExpr) -> Self::Output {
+        todo!()
+    }
 }
