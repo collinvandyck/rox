@@ -28,8 +28,14 @@ impl Class {
 }
 
 impl Instance {
-    pub fn get(&self, name: &Token) -> Result<Value, InstanceError> {
-        todo!()
+    pub fn get(&self, name: impl AsRef<str>) -> Result<Value, InstanceError> {
+        let name = name.as_ref();
+        self.fields
+            .get(name)
+            .ok_or_else(|| InstanceError::UndefinedProperty {
+                name: name.to_string(),
+            })
+            .cloned()
     }
 }
 
