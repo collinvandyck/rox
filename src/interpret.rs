@@ -28,7 +28,7 @@ pub enum Error {
     NotAFunction { token: Token },
 
     #[error("line {}: only instances have properties", token.line)]
-    InvalidGet { token: Token },
+    OnlyInstancesHaveProperties { token: Token },
 
     #[error("line {}: expected {expected} args but got {actual}", token.line)]
     FunctionArity {
@@ -346,7 +346,7 @@ impl ExprVisitor for Interpreter {
     fn visit_get_expr(&mut self, expr: &GetExpr) -> Self::Output {
         let object = self.evaluate(&expr.object)?;
         let Value::Instance(instance) = object else {
-            return Err(Error::InvalidGet {
+            return Err(Error::OnlyInstancesHaveProperties {
                 token: expr.name.clone(),
             });
         };
@@ -359,6 +359,18 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_set_expr(&mut self, expr: &SetExpr) -> Self::Output {
-        todo!()
+        let object = self.evaluate(&expr.object)?;
+        let Value::Instance(instance) = object else {
+            return Err(Error::OnlyInstancesHaveProperties {
+                token: expr.name.clone(),
+            });
+        };
+        let value = self.evaluate(&expr.value)?;
+        Ok(instance
+            .set(&expr.name, value)
+            .map_err(|err| Error::InstanceError {
+                token: expr.name.clone(),
+                err,
+            })?)
     }
 }

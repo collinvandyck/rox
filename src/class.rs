@@ -37,6 +37,9 @@ impl Instance {
             })
             .cloned()
     }
+    pub fn set(&self, name: impl AsRef<str>, value: Value) -> Result<Value, InstanceError> {
+        todo!()
+    }
 }
 
 /// A Class is callable in the sense that the class itself is also a constructor
