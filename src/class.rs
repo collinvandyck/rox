@@ -1,6 +1,5 @@
+use crate::prelude::*;
 use std::fmt::Display;
-
-use crate::prelude::{Callable, CallableError, Interpreter, Value};
 
 /// The *runtime* representation of a lox class
 #[derive(Clone, Debug, PartialEq)]
@@ -18,6 +17,12 @@ impl Class {
         Self {
             name: name.as_ref().to_string(),
         }
+    }
+}
+
+impl Instance {
+    pub fn get(&self, name: &Token) -> Value {
+        todo!()
     }
 }
 

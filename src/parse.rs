@@ -458,6 +458,14 @@ impl Parser {
         loop {
             if self.match_any(TT::LeftParen) {
                 expr = self.finish_call(expr)?;
+            } else if self.match_any(TT::Dot) {
+                let name = self
+                    .consume(TT::Identifier)
+                    .context("expect property name after '.'")?;
+                expr = Expr::from(GetExpr {
+                    name,
+                    object: expr.into(),
+                })
             } else {
                 break;
             }

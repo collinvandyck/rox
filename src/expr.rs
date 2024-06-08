@@ -94,8 +94,8 @@ pub struct CallExpr {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GetExpr {
-    object: Box<Expr>,
-    name: Token,
+    pub name: Token,
+    pub object: Box<Expr>,
 }
 
 impl Expr {

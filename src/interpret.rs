@@ -27,6 +27,9 @@ pub enum Error {
     #[error("line {}: can only call functions and classes", token.line)]
     NotAFunction { token: Token },
 
+    #[error("line {}: only instances have properties", token.line)]
+    InvalidGet { token: Token },
+
     #[error("line {}: expected {expected} args but got {actual}", token.line)]
     FunctionArity {
         token: Token,
@@ -334,6 +337,12 @@ impl ExprVisitor for Interpreter {
     }
 
     fn visit_get_expr(&mut self, expr: &GetExpr) -> Self::Output {
-        todo!()
+        let object = self.evaluate(&expr.object)?;
+        let Value::Instance(instance) = object else {
+            return Err(Error::InvalidGet {
+                token: expr.name.clone(),
+            });
+        };
+        Ok(instance.get(&expr.name))
     }
 }
