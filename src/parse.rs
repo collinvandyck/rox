@@ -61,6 +61,7 @@ impl<T> LineResultExt<T> for Result<T, LineError> {
     fn context(self, ctx: impl AsRef<str>) -> Result<T, LineError> {
         self.map_err(|err| err.context(ctx.as_ref().to_string()))
     }
+    /// adds additional context about the kind of fn
     fn for_fn_kind(self, kind: FunctionKind) -> Result<T, LineError> {
         self.map_err(|err| LineError::FunctionKind {
             kind,

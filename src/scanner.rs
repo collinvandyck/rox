@@ -312,6 +312,12 @@ pub struct Token {
     pub line: usize,
 }
 
+impl AsRef<str> for Token {
+    fn as_ref(&self) -> &str {
+        self.lexeme.as_ref()
+    }
+}
+
 impl Token {
     pub fn new(typ: TokenType, lexeme: Lexeme, literal: Option<Value>, line: usize) -> Self {
         Self {

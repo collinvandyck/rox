@@ -140,7 +140,7 @@ impl StmtVisitor for Interpreter {
             .map(|i| self.evaluate(i))
             .transpose()?
             .unwrap_or(Value::Undefined);
-        self.env.define(expr.name.lexeme.as_ref(), value)?;
+        self.env.define(&expr.name, value)?;
         Ok(())
     }
     fn visit_block_stmt(&mut self, expr: &BlockStmt) -> Self::Output {
@@ -162,7 +162,7 @@ impl StmtVisitor for Interpreter {
     }
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output {
         self.env.define(
-            stmt.name.lexeme.as_ref(),
+            &stmt.name,
             Value::Function(Callable::LoxFunction(LoxFunction {
                 stmt: stmt.clone().into(),
                 closure: self.env.clone(),
@@ -178,6 +178,7 @@ impl StmtVisitor for Interpreter {
         Err(Error::Return(value))
     }
     fn visit_class_stmt(&mut self, stmt: &ClassStmt) -> Self::Output {
+        self.env.define(&stmt.name, Value::Nil)?;
         todo!()
     }
 }
