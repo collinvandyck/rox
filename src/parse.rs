@@ -224,7 +224,6 @@ impl Parser {
     }
 
     fn stmt(&mut self) -> Result<Stmt, LineError> {
-        debug!("stmt peek={:?}", self.peek());
         if self.match_any(TT::If) {
             return self.if_stmt();
         }
@@ -324,9 +323,10 @@ impl Parser {
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, LineError> {
-        debug!("print_stmt");
+        tracing::debug!("print stmt");
         let expr = self.expr()?;
         self.consume(TT::Semicolon)?;
+        tracing::debug!("print stmt ok");
         Ok(Stmt::Print(PrintStmt { expr }))
     }
 
@@ -350,6 +350,7 @@ impl Parser {
         debug!("expr_stmt");
         let expr = self.expr()?;
         self.consume(TT::Semicolon)?;
+        debug!("expr_stmt ok");
         Ok(Stmt::Expr(ExprStmt { expr }))
     }
 
@@ -363,7 +364,6 @@ impl Parser {
     //
     // assignment is right-associative so we recurse to build the RHS
     fn assignment(&mut self) -> Result<Expr, LineError> {
-        debug!("assignment peek={:?}", self.peek());
         let expr = self.or()?;
         if self.match_any(TT::Equal) {
             // TODO: we match on a ref so that we don't move the expr into the match, but it makes
@@ -384,10 +384,10 @@ impl Parser {
                         object: object.clone(),
                         name: name.clone(),
                         value: expr.into(),
-                    }))
+                    }));
                 }
                 _ => {
-                    return Err(self.expected_typ_error(TT::Equal));
+                    return dbg!(Err(self.expected_typ_error(TT::Equal)));
                 }
             }
         }
@@ -526,7 +526,6 @@ impl Parser {
     // primary → NUMBER | STRING | "true" | "false" | "nil"
     //           | "(" expression ")" ;
     fn primary(&mut self) -> Result<Expr, LineError> {
-        debug!("primary peek={:?}", self.peek());
         if self.match_any(TT::False) {
             return Ok(Expr::literal(Value::Bool(false)));
         }

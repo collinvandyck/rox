@@ -104,6 +104,19 @@ fn test_new_bagel() {
     assert_eq!(run.lines(), vec!["Bagel instance"]);
 }
 
+#[test]
+#[traced_test]
+fn test_object_properties() {
+    let prog = r#"
+        class Props {}
+        var props = Props();
+        props.x = 42;
+        print props.x;
+    "#;
+    let run = run_prog(prog).unwrap();
+    assert_eq!(run.lines(), vec!["42"]);
+}
+
 #[derive(Debug)]
 struct Run {
     stdout: Vec<u8>,
@@ -127,7 +140,7 @@ fn run_prog(prog: impl AsRef<str>) -> Result<Run, Box<dyn std::error::Error>> {
     if let Err(err) = Lox::default()
         .stdout(stdout.clone())
         .stderr(stderr.clone())
-        .run(&prog)
+        .run(prog.as_ref().trim())
     {
         eprintln!("{stdout}");
         return Err(err.into());
