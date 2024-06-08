@@ -323,10 +323,8 @@ impl Parser {
     }
 
     fn print_stmt(&mut self) -> Result<Stmt, LineError> {
-        tracing::debug!("print stmt");
         let expr = self.expr()?;
         self.consume(TT::Semicolon)?;
-        tracing::debug!("print stmt ok");
         Ok(Stmt::Print(PrintStmt { expr }))
     }
 
@@ -341,16 +339,13 @@ impl Parser {
     }
 
     fn block_stmt(&mut self) -> Result<Stmt, LineError> {
-        debug!("block_stmt");
         let statements = self.block()?;
         Ok(Stmt::Block(BlockStmt { statements }))
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, LineError> {
-        debug!("expr_stmt");
         let expr = self.expr()?;
         self.consume(TT::Semicolon)?;
-        debug!("expr_stmt ok");
         Ok(Stmt::Expr(ExprStmt { expr }))
     }
 
