@@ -366,16 +366,30 @@ impl Parser {
         debug!("assignment peek={:?}", self.peek());
         let expr = self.or()?;
         if self.match_any(TT::Equal) {
-            let Expr::Var(VarExpr { name }) = expr else {
-                return Err(self.expected_typ_error(TT::Equal));
-            };
-            let equal = self.previous();
-            let value = self.assignment()?;
-            return Ok(AssignExpr {
-                name,
-                value: value.into(),
+            // TODO: we match on a ref so that we don't move the expr into the match, but it makes
+            // us need to clone the fields for the other assign/set exprs. is there a way to do
+            // this better?
+            match &expr {
+                Expr::Var(VarExpr { name }) => {
+                    let equal = self.previous();
+                    let value = self.assignment()?;
+                    return Ok(Expr::from(AssignExpr {
+                        name: name.clone(),
+                        value: value.into(),
+                    }));
+                }
+                // here we convert a GetExpr into a SetExpr since an '=' follows it.
+                Expr::Get(GetExpr { object, name }) => {
+                    return Ok(Expr::from(SetExpr {
+                        object: object.clone(),
+                        name: name.clone(),
+                        value: expr.into(),
+                    }))
+                }
+                _ => {
+                    return Err(self.expected_typ_error(TT::Equal));
+                }
             }
-            .into());
         }
         Ok(expr)
     }
