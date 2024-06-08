@@ -13,8 +13,14 @@ pub enum CallableError {
     Env(#[from] env::EnvError),
 }
 
+/// This is the trait that all types which are callable must implement
+pub trait Callable {
+    fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError>;
+    fn arity(&self) -> usize;
+}
+
 #[derive(Clone)]
-pub enum Callable {
+pub enum Function {
     Native(NativeFunction),
     LoxFunction(LoxFunction),
 }
@@ -29,13 +35,11 @@ pub struct LoxFunction {
 pub struct NativeFunction {
     pub name: String,
     pub arity: usize,
-    pub func: Rc<CallableFn>,
+    pub func: Rc<dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>>,
 }
 
-type CallableFn = dyn Fn(&mut Interpreter, Vec<Value>) -> Result<Value, CallableError>;
-
-impl Callable {
-    pub fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
+impl Callable for Function {
+    fn call(&self, int: &mut Interpreter, args: Vec<Value>) -> Result<Value, CallableError> {
         match self {
             Self::Native(NativeFunction { func, .. }) => func(int, args),
             Self::LoxFunction(LoxFunction { stmt, closure }) => {
@@ -56,7 +60,7 @@ impl Callable {
         }
     }
 
-    pub fn arity(&self) -> usize {
+    fn arity(&self) -> usize {
         match self {
             Self::Native(NativeFunction { arity, .. }) => *arity,
             Self::LoxFunction(func) => func.stmt.params.len(),
@@ -64,17 +68,17 @@ impl Callable {
     }
 }
 
-impl PartialEq for Callable {
+impl PartialEq for Function {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Callable::Native(n1), Callable::Native(n2)) => n1.name == n2.name,
-            (Callable::LoxFunction(n1), Callable::LoxFunction(n2)) => n1.stmt == n2.stmt,
+            (Function::Native(n1), Function::Native(n2)) => n1.name == n2.name,
+            (Function::LoxFunction(n1), Function::LoxFunction(n2)) => n1.stmt == n2.stmt,
             _ => false,
         }
     }
 }
 
-impl std::fmt::Debug for Callable {
+impl std::fmt::Debug for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Native(NativeFunction { name, arity, .. }) => f
@@ -87,7 +91,7 @@ impl std::fmt::Debug for Callable {
     }
 }
 
-impl std::fmt::Display for Callable {
+impl std::fmt::Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Native(native) => write!(f, "<native fn {}>", native.name),

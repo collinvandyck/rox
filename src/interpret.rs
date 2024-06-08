@@ -59,7 +59,7 @@ impl Default for Interpreter {
         let mut env = Env::default();
         env.define(
             "clock",
-            Value::Function(Callable::Native(NativeFunction {
+            Value::Function(Function::Native(NativeFunction {
                 name: "clock".to_string(),
                 arity: 0,
                 func: Rc::new(|interpreter: &mut Interpreter, args: Vec<Value>| {
@@ -182,7 +182,7 @@ impl StmtVisitor for Interpreter {
     fn visit_function_stmt(&mut self, stmt: &FunctionStmt) -> Self::Output {
         self.env.define(
             &stmt.name,
-            Value::Function(Callable::LoxFunction(LoxFunction {
+            Value::Function(Function::LoxFunction(LoxFunction {
                 stmt: stmt.clone().into(),
                 closure: self.env.clone(),
             })),
@@ -309,7 +309,7 @@ impl ExprVisitor for Interpreter {
 
     fn visit_call_expr(&mut self, expr: &CallExpr) -> Self::Output {
         let callee = self.evaluate(&expr.callee)?;
-        let Value::Function(func) = callee else {
+        let Some(callable) = callee.as_callable() else {
             return Err(Error::NotAFunction {
                 token: expr.paren.clone(),
             });
@@ -319,7 +319,7 @@ impl ExprVisitor for Interpreter {
             .iter()
             .map(|arg| self.evaluate(arg))
             .collect::<Result<Vec<_>, _>>()?;
-        let arity = func.arity();
+        let arity = callable.arity();
         if args.len() != arity {
             return Err(Error::FunctionArity {
                 token: expr.paren.clone(),
@@ -328,7 +328,7 @@ impl ExprVisitor for Interpreter {
             });
         }
         self.fn_depth += 1;
-        let fn_res = func.call(self, args);
+        let fn_res = callable.call(self, args);
         self.fn_depth -= 1;
         Ok(fn_res?)
     }

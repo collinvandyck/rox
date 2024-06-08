@@ -340,7 +340,7 @@ pub enum Value {
     Number(f64),
     String(String),
     Bool(bool),
-    Function(Callable),
+    Function(Function),
     Class(Class),
     Nil,
     Undefined,
@@ -359,6 +359,14 @@ pub enum ValueError {
 }
 
 impl Value {
+    pub fn as_callable(&self) -> Option<&dyn Callable> {
+        match self {
+            Value::Function(f) => Some(f),
+            Value::Class(c) => Some(c),
+            _ => None,
+        }
+    }
+
     pub fn to_lox(&self) -> String {
         match self {
             Self::Number(v) => v.to_string(),
