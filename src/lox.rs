@@ -11,7 +11,7 @@ pub enum LoxError {
     #[error(transparent)]
     Parse(#[from] ParseError),
     #[error(transparent)]
-    Interpret(#[from] interpret::Error),
+    Interpret(#[from] interpreter::Error),
 }
 
 #[derive(Default)]
@@ -28,11 +28,11 @@ impl Lox {
         let mut scanner = Scanner::new(prog);
         let tokens = scanner.scan_tokens().map_err(LoxError::Scan)?;
         // Parser::parse should take a &[Token] instead.
-        if let Ok(expr) = parse::Parser::new(tokens.clone()).single_expr() {
+        if let Ok(expr) = parser::Parser::new(tokens.clone()).single_expr() {
             let val = self.interpreter.evaluate(&expr)?;
             println!("{val}");
         } else {
-            let mut parser = parse::Parser::new(tokens);
+            let mut parser = parser::Parser::new(tokens);
             let stmts = parser.parse().map_err(LoxError::Parse)?;
             self.interpreter
                 .interpret(&stmts)

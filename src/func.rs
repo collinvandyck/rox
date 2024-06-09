@@ -7,7 +7,7 @@ pub enum CallableError {
     Generic(Box<dyn std::error::Error>),
 
     #[error("call: {0}")]
-    Call(Box<interpret::Error>),
+    Call(Box<interpreter::Error>),
 
     #[error("call: {0}")]
     Env(#[from] env::EnvError),
