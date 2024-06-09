@@ -1,7 +1,7 @@
+use crate::prelude::*;
 use tracing_test::traced_test;
 
-use crate::prelude::*;
-
+#[traced_test]
 #[test]
 fn assign() {
     let prog = "x=42;";
