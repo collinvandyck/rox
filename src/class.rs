@@ -9,7 +9,10 @@ use std::{
 #[derive(Clone, Debug, PartialEq)]
 pub struct Class {
     name: String,
+    methods: Methods,
 }
+
+type Methods = HashMap<String, LoxFunction>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum InstanceError {
@@ -29,9 +32,10 @@ struct Fields {
 }
 
 impl Class {
-    pub fn new(name: impl AsRef<str>) -> Self {
+    pub fn new(name: impl AsRef<str>, methods: Methods) -> Self {
         Self {
             name: name.as_ref().to_string(),
+            methods,
         }
     }
 }

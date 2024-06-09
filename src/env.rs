@@ -34,7 +34,7 @@ impl EnvError {
 
 type Result<T> = std::result::Result<T, EnvError>;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Env {
     // the offset into the inner record collection that instructs get/assign operations how far
     // into the vec of records that may be considered. because Env can be cloned, the cursor value
@@ -101,13 +101,13 @@ impl Env {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 struct Inner {
     parent: Option<Env>,
     records: Vec<Record>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Record {
     name: String,
     val: Value,

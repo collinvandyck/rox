@@ -25,7 +25,7 @@ pub enum Function {
     LoxFunction(LoxFunction),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LoxFunction {
     pub stmt: Box<FunctionStmt>,
     pub closure: env::Env,

@@ -55,6 +55,9 @@ pub enum Error {
         #[source]
         err: InstanceError,
     },
+
+    #[error("class method stmt is not a function")]
+    ClassStmtNotFunction,
 }
 
 pub struct Interpreter {
@@ -210,7 +213,18 @@ impl StmtVisitor for Interpreter {
 
     fn visit_class_stmt(&mut self, stmt: &ClassStmt) -> Self::Output {
         self.env.define(&stmt.name, Value::Nil)?;
-        let class = Class::new(&stmt.name);
+        let mut methods = HashMap::default();
+        for method in &stmt.methods {
+            let Stmt::Function(func_stmt) = method else {
+                return Err(Error::ClassStmtNotFunction);
+            };
+            let func = LoxFunction {
+                stmt: func_stmt.clone().into(),
+                closure: self.env.clone(),
+            };
+            methods.insert(func_stmt.name.as_ref().to_string(), func);
+        }
+        let class = Class::new(&stmt.name, methods);
         self.env.assign(&stmt.name, class)?;
         Ok(())
     }
