@@ -319,6 +319,9 @@ impl AsRef<str> for Token {
 }
 
 impl Token {
+    pub fn name(&self) -> String {
+        self.lexeme.to_string()
+    }
     pub fn new(typ: TokenType, lexeme: Lexeme, literal: Option<Value>, line: usize) -> Self {
         Self {
             typ,

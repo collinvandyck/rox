@@ -2,6 +2,7 @@ pub use crate::*;
 pub use class::*;
 pub use expr::*;
 pub use func::*;
+pub use instance::*;
 pub use interpreter::*;
 pub use itertools::Itertools;
 pub use lox::*;

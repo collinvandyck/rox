@@ -218,11 +218,13 @@ impl StmtVisitor for Interpreter {
             let Stmt::Function(func_stmt) = method else {
                 return Err(Error::ClassStmtNotFunction);
             };
-            let func = LoxFunction {
-                stmt: func_stmt.clone().into(),
-                closure: self.env.clone(),
-            };
-            methods.insert(func_stmt.name.as_ref().to_string(), func);
+            methods.insert(
+                func_stmt.name.to_string(),
+                LoxFunction {
+                    stmt: func_stmt.clone().into(),
+                    closure: self.env.clone(),
+                },
+            );
         }
         let class = Class::new(&stmt.name, methods);
         self.env.assign(&stmt.name, class)?;

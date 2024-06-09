@@ -4,6 +4,7 @@ pub mod class;
 pub mod env;
 pub mod expr;
 pub mod func;
+pub mod instance;
 pub mod interpreter;
 pub mod lox;
 pub mod parser;
