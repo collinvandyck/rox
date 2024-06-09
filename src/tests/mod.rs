@@ -1,2 +1,3 @@
-mod test_interpret;
-mod test_scan;
+mod interpreter;
+mod parser;
+mod scanner;
