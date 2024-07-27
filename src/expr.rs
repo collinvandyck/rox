@@ -14,37 +14,6 @@ pub enum Expr {
     Set(SetExpr),
 }
 
-impl Expr {
-    pub fn binary(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
-        Self::Binary(BinaryExpr {
-            left: left.into(),
-            op,
-            right: right.into(),
-        })
-    }
-    pub fn logical(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
-        Self::Logical(LogicalExpr {
-            left: left.into(),
-            op,
-            right: right.into(),
-        })
-    }
-    pub fn literal(literal: impl Into<Value>) -> Self {
-        Self::Literal(LiteralExpr {
-            value: literal.into(),
-        })
-    }
-    pub fn unary(op: Token, right: impl Into<Box<Expr>>) -> Self {
-        Self::Unary(UnaryExpr {
-            op,
-            right: right.into(),
-        })
-    }
-    pub fn group(expr: impl Into<Box<Expr>>) -> Self {
-        Self::Group(GroupExpr { expr: expr.into() })
-    }
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct AssignExpr {
     pub name: Token,
@@ -107,6 +76,35 @@ pub struct SetExpr {
 }
 
 impl Expr {
+    pub fn binary(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
+        Self::Binary(BinaryExpr {
+            left: left.into(),
+            op,
+            right: right.into(),
+        })
+    }
+    pub fn logical(left: impl Into<Box<Expr>>, op: Token, right: impl Into<Box<Expr>>) -> Self {
+        Self::Logical(LogicalExpr {
+            left: left.into(),
+            op,
+            right: right.into(),
+        })
+    }
+    pub fn literal(literal: impl Into<Value>) -> Self {
+        Self::Literal(LiteralExpr {
+            value: literal.into(),
+        })
+    }
+    pub fn unary(op: Token, right: impl Into<Box<Expr>>) -> Self {
+        Self::Unary(UnaryExpr {
+            op,
+            right: right.into(),
+        })
+    }
+    pub fn group(expr: impl Into<Box<Expr>>) -> Self {
+        Self::Group(GroupExpr { expr: expr.into() })
+    }
+
     pub fn accept<Out>(&self, visitor: &mut impl ExprVisitor<Output = Out>) -> Out {
         match self {
             Expr::Binary(e) => visitor.visit_binary_expr(e),
